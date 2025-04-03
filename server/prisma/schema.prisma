@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Order {
+  id        String       @id @default(uuid())
+  userId    String
+  user      User         @relation(fields: [userId], references: [id])
+  products  OrderProduct[]
+  total     Float        @default(0.0)
+  status    String?
+  createdAt DateTime     @default(now())
+  comment   String?
+  address   String?
+  workType  String?     
+}
+
+model OrderProduct {
+  orderId   String
+  productId String
+  quantity  Int         @default(1)
+  order     Order       @relation(fields: [orderId], references: [id])
+  product   Product     @relation(fields: [productId], references: [id])
+  @@id([orderId, productId])
+}
+
+model Product {
+  id        String       @id @default(uuid())
+  name      String
+  type      ProductType
+  materialId String
+  price     Float
+  image     String?
+  material  Material     @relation(fields: [materialId], references: [id])
+  orders    OrderProduct[]
+}
+
+model Material {
+  id         String    @id @default(uuid())
+  name       String
+  pricePerGram Float?  
+  quantity   Int?     
+  products   Product[]
+  supplier   Supplier? @relation(fields: [supplierId], references: [id])
+  supplierId String?
+  requests   MaterialRequest[]
+}
+
+model User {
+  id       String    @id @default(uuid())
+  name     String
+  email    String    @unique
+  password String
+  phone    String?
+  role     Role
+  orders   Order[]
+  materialRequests MaterialRequest[]
+  totalOrdersAmount Float @default(0.0)
+}
+
+enum Role {
+  CLIENT
+  ADMIN
+  WORKER
+  SUPPLIER
+  DIRECTOR
+}
+
+enum ProductType {
+  RING           // Кольцо
+  CUFFLINKS      // Запонки
+  BROOCH         // Брошь
+  PENDANT        // Кулон
+  WATCH          // Часы
+  NECKLACE       // Подвеска
+  CHAIN          // Цепочка
+  EARRINGS       // Серьги
+  BRACELET       // Браслет
+  CUSTOM_ORDER   // Индивидуальный заказ
+}
+
+model Supplier {
+  id        String    @id @default(uuid())
+  name      String
+  contact   String
+  materials Material[]
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+model MaterialRequest {
+  id        String   @id @default(uuid())
+  userId    String
+  materialId String
+  quantity  Int
+  status    RequestStatus   @default(PENDING)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  material  Material @relation(fields: [materialId], references: [id])
+}
