@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 
 // Настройка CORS для Vercel
 const allowedOrigins = [
-  "https://react-trpo-last-okm9vxtr7-akaokos-projects.vercel.app",
+  "https://react-trpo.vercel.app",
   "http://localhost:5173",
   "http://localhost:5000",
 ];
