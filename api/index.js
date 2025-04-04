@@ -137,7 +137,114 @@ export default async function handler(req, res) {
           return res.status(401).json({ error: "Unauthorized" });
         }
 
+      // Получение списка пользователей
+      case path === "/api/users" && req.method === "GET":
+        try {
+          const user = verifyToken(req);
+          if (user.role !== "ADMIN") {
+            return res.status(403).json({ error: "Forbidden" });
+          }
+          const users = await prisma.user.findMany({
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+              role: true,
+              totalOrdersAmount: true,
+            },
+          });
+          return res.json(users);
+        } catch (error) {
+          return res.status(401).json({ error: "Unauthorized" });
+        }
+
+      // Получение списка материалов
+      case path === "/api/materials" && req.method === "GET":
+        try {
+          const materials = await prisma.material.findMany({
+            include: {
+              supplier: true,
+            },
+          });
+          return res.json(materials);
+        } catch (error) {
+          console.error("Materials error:", error);
+          return res
+            .status(500)
+            .json({ error: "Ошибка при получении материалов" });
+        }
+
+      // Получение списка типов продуктов
+      case path === "/api/product-types" && req.method === "GET":
+        try {
+          const productTypes = Object.values(prisma.ProductType);
+          return res.json(productTypes);
+        } catch (error) {
+          console.error("Product types error:", error);
+          return res
+            .status(500)
+            .json({ error: "Ошибка при получении типов продуктов" });
+        }
+
+      // Получение списка продуктов
+      case path === "/api/products" && req.method === "GET":
+        try {
+          const products = await prisma.product.findMany({
+            include: {
+              material: true,
+            },
+          });
+          return res.json(products);
+        } catch (error) {
+          console.error("Products error:", error);
+          return res
+            .status(500)
+            .json({ error: "Ошибка при получении продуктов" });
+        }
+
+      // Получение списка заказов
+      case path === "/api/orders" && req.method === "GET":
+        try {
+          const user = verifyToken(req);
+          const orders = await prisma.order.findMany({
+            where: user.role === "ADMIN" ? {} : { userId: user.userId },
+            include: {
+              products: {
+                include: {
+                  product: true,
+                },
+              },
+              user: true,
+            },
+          });
+          return res.json(orders);
+        } catch (error) {
+          console.error("Orders error:", error);
+          return res
+            .status(500)
+            .json({ error: "Ошибка при получении заказов" });
+        }
+
+      // Получение списка заявок на материалы
+      case path === "/api/material-requests" && req.method === "GET":
+        try {
+          const user = verifyToken(req);
+          const requests = await prisma.materialRequest.findMany({
+            where: user.role === "ADMIN" ? {} : { userId: user.userId },
+            include: {
+              material: true,
+              user: true,
+            },
+          });
+          return res.json(requests);
+        } catch (error) {
+          console.error("Material requests error:", error);
+          return res.status(500).json({ error: "Ошибка при получении заявок" });
+        }
+
       default:
+        console.log("Route not found:", path);
         return res.status(404).json({ error: "Route not found" });
     }
   } catch (error) {
