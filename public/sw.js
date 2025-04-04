@@ -1,5 +1,5 @@
 const CACHE_NAME = "react-trpo-cache-v1";
-const urlsToCache = ["/", "/index.html", "/assets/", "/placeholder.png"];
+const urlsToCache = ["/", "/index.html", "/assets/", "/images/placeholder.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -24,6 +24,7 @@ self.addEventListener("fetch", (event) => {
         })
         .catch((error) => {
           console.error("API fetch error:", error);
+          // Возвращаем ошибку с тем же статусом, что и оригинальный запрос
           return new Response(
             JSON.stringify({
               error: "Network error",
@@ -31,7 +32,7 @@ self.addEventListener("fetch", (event) => {
               url: event.request.url,
             }),
             {
-              status: 500,
+              status: error.message.includes("404") ? 404 : 500,
               headers: { "Content-Type": "application/json" },
             }
           );
@@ -57,6 +58,10 @@ self.addEventListener("fetch", (event) => {
         return caches.match(event.request).then((response) => {
           if (response) {
             return response;
+          }
+          // Для изображений возвращаем placeholder
+          if (event.request.destination === "image") {
+            return caches.match("/images/placeholder.svg");
           }
           return new Response(
             JSON.stringify({

@@ -255,7 +255,7 @@ export default async function handler(req, res) {
         }
 
       // Обновление данных пользователя
-      case path === "/api/users/:id" && req.method === "PUT":
+      case path.startsWith("/api/users/") && req.method === "PUT":
         try {
           const user = verifyToken(req);
           if (user.role !== "ADMIN") {
@@ -264,7 +264,7 @@ export default async function handler(req, res) {
             });
           }
 
-          const { id } = req.params;
+          const id = path.split("/").pop();
           const { name, email, phone, role } = req.body;
 
           const updatedUser = await prisma.user.update({
@@ -293,6 +293,88 @@ export default async function handler(req, res) {
           return res
             .status(500)
             .json({ error: "Не удалось обновить данные пользователя" });
+        }
+
+      // Обновление заказа
+      case path.startsWith("/api/orders/") && req.method === "PUT":
+        try {
+          const user = verifyToken(req);
+          const id = path.split("/").pop();
+          const { status } = req.body;
+
+          const order = await prisma.order.findUnique({
+            where: { id },
+            include: { user: true },
+          });
+
+          if (!order) {
+            return res.status(404).json({ error: "Заказ не найден" });
+          }
+
+          if (user.role !== "ADMIN" && order.userId !== user.userId) {
+            return res
+              .status(403)
+              .json({ error: "Нет прав для обновления заказа" });
+          }
+
+          const updatedOrder = await prisma.order.update({
+            where: { id },
+            data: { status },
+            include: {
+              products: {
+                include: {
+                  product: true,
+                },
+              },
+              user: true,
+            },
+          });
+
+          return res.json(updatedOrder);
+        } catch (error) {
+          console.error("Ошибка при обновлении заказа:", error);
+          return res.status(500).json({ error: "Не удалось обновить заказ" });
+        }
+
+      // Обновление заявки на материалы
+      case path.startsWith("/api/material-requests/") && req.method === "PUT":
+        try {
+          const user = verifyToken(req);
+          const id = path.split("/").pop();
+          const { status, materialId, quantity } = req.body;
+
+          const request = await prisma.materialRequest.findUnique({
+            where: { id },
+            include: { user: true },
+          });
+
+          if (!request) {
+            return res.status(404).json({ error: "Заявка не найдена" });
+          }
+
+          if (user.role !== "ADMIN" && request.userId !== user.userId) {
+            return res
+              .status(403)
+              .json({ error: "Нет прав для обновления заявки" });
+          }
+
+          const updatedRequest = await prisma.materialRequest.update({
+            where: { id },
+            data: {
+              status,
+              materialId,
+              quantity,
+            },
+            include: {
+              material: true,
+              user: true,
+            },
+          });
+
+          return res.json(updatedRequest);
+        } catch (error) {
+          console.error("Ошибка при обновлении заявки:", error);
+          return res.status(500).json({ error: "Не удалось обновить заявку" });
         }
 
       default:
