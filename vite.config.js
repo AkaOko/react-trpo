@@ -34,7 +34,6 @@ export default defineConfig({
         target: "https://react-trpo.vercel.app",
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/api/, ""),
       },
     },
   },

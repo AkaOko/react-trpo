@@ -22,7 +22,11 @@ self.addEventListener("fetch", (event) => {
         .catch((error) => {
           console.error("API fetch error:", error);
           return new Response(
-            JSON.stringify({ error: "Network error", details: error.message }),
+            JSON.stringify({
+              error: "Network error",
+              details: error.message,
+              url: event.request.url,
+            }),
             {
               status: 500,
               headers: { "Content-Type": "application/json" },
@@ -50,10 +54,16 @@ self.addEventListener("fetch", (event) => {
           if (response) {
             return response;
           }
-          return new Response(JSON.stringify({ error: "Network error" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" },
-          });
+          return new Response(
+            JSON.stringify({
+              error: "Network error",
+              url: event.request.url,
+            }),
+            {
+              status: 500,
+              headers: { "Content-Type": "application/json" },
+            }
+          );
         });
       })
   );
