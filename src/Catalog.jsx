@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "./config/api";
 import { jwtDecode } from "jwt-decode";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -19,47 +19,44 @@ export default function Catalog() {
     comment: "",
     address: "",
   });
+  const [cart, setCart] = useState({});
+  const [showOrderSuccess, setShowOrderSuccess] = useState(false);
+  const [error, setError] = useState("");
+
+  const fetchProducts = async () => {
+    try {
+      const { data } = await api.get("/products");
+      const filteredData = data.filter(
+        (product) => product.name.toLowerCase() !== "индивидуальный"
+      );
+      console.log(
+        "Загруженные товары:",
+        filteredData.map((p) => p.name)
+      );
+      setProducts(filteredData);
+      setFilteredProducts(filteredData);
+      setLoading(false);
+    } catch (error) {
+      console.error("Ошибка при загрузке данных:", error);
+      alert("Ошибка загрузки товаров");
+      setLoading(false);
+    }
+  };
+
+  const fetchProductTypes = async () => {
+    try {
+      const { data } = await api.get("/product-types");
+      setProductTypes(data);
+    } catch (error) {
+      console.error("Ошибка при загрузке типов продуктов:", error);
+    }
+  };
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const { data } = await axios.get("http://localhost:5000/products");
-        const filteredData = data.filter(
-          (product) => product.name.toLowerCase() !== "индивидуальный"
-        );
-        console.log(
-          "Загруженные товары:",
-          filteredData.map((p) => p.name)
-        );
-        setProducts(filteredData);
-        setFilteredProducts(filteredData);
-        setLoading(false);
-      } catch (error) {
-        console.error(
-          "Ошибка загрузки товаров:",
-          error.response?.data || error.message
-        );
-        alert("Ошибка загрузки товаров");
-        setLoading(false);
-      }
-    };
-
     fetchProducts();
   }, []);
 
   useEffect(() => {
-    const fetchProductTypes = async () => {
-      try {
-        const { data } = await axios.get("http://localhost:5000/product-types");
-        setProductTypes(data);
-      } catch (error) {
-        console.error(
-          "Ошибка загрузки типов товаров:",
-          error.response?.data || error.message
-        );
-      }
-    };
-
     fetchProductTypes();
   }, []);
 
@@ -132,26 +129,35 @@ export default function Catalog() {
         workType: selectedProduct.type,
       };
 
-      const response = await axios.post(
-        "http://localhost:5000/orders",
-        orderData,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      await api.post("/orders", orderData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       showNotification("Заказ успешно создан!");
       handleOrderClose();
     } catch (error) {
-      console.error(
-        "Ошибка при создании заказа:",
-        error.response?.data || error.message
-      );
+      console.error("Ошибка при создании заказа:", error);
       showNotification(
         "Ошибка при создании заказа: " +
           (error.response?.data?.details || error.message),
         "error"
       );
+    }
+  };
+
+  const handleCreateOrder = async () => {
+    try {
+      await api.post("/orders", {
+        products: Object.entries(cart).map(([id, quantity]) => ({
+          productId: id,
+          quantity,
+        })),
+      });
+      setCart({});
+      setShowOrderSuccess(true);
+    } catch (error) {
+      console.error("Ошибка при создании заказа:", error);
+      setError("Ошибка при создании заказа");
     }
   };
 

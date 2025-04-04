@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "./config/api";
 import { jwtDecode } from "jwt-decode";
 import Navbar from "./components/Navbar";
 import MaterialRequestsManagement from "./components/MaterialRequestsManagement";
@@ -65,30 +65,28 @@ const AdminPage = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem("token");
-        const [productsRes, materialsRes, typesRes, ordersRes, usersRes] =
-          await Promise.all([
-            axios.get("http://localhost:5000/products"),
-            axios.get("http://localhost:5000/materials"),
-            axios.get("http://localhost:5000/product-types"),
-            axios.get("http://localhost:5000/orders", {
-              headers: { Authorization: `Bearer ${token}` },
-            }),
-            axios.get("http://localhost:5000/users", {
-              headers: { Authorization: `Bearer ${token}` },
-            }),
-          ]);
+        const [
+          productsRes,
+          materialsRes,
+          productTypesRes,
+          ordersRes,
+          usersRes,
+        ] = await Promise.all([
+          api.get("/products"),
+          api.get("/materials"),
+          api.get("/product-types"),
+          api.get("/orders"),
+          api.get("/users"),
+        ]);
+
         setProducts(productsRes.data);
         setMaterials(materialsRes.data);
-        setProductTypes(typesRes.data);
+        setProductTypes(productTypesRes.data);
         setOrders(ordersRes.data);
         setUsers(usersRes.data);
         setError(null);
       } catch (error) {
-        console.error(
-          "Ошибка при загрузке данных:",
-          error.response?.data || error.message
-        );
+        console.error("Ошибка при загрузке данных:", error);
         if (error.response?.status === 403) {
           setError("Доступ запрещён. Требуются права администратора.");
         } else {
@@ -119,36 +117,32 @@ const AdminPage = () => {
     setNewProduct((prev) => ({ ...prev, image: file }));
   };
 
-  const handleAddProduct = async (e) => {
-    e.preventDefault();
+  const handleImageUpload = async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      const response = await api.post("/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return response.data.url;
+    } catch (error) {
+      console.error("Ошибка при загрузке изображения:", error);
+      throw error;
+    }
+  };
+
+  const handleCreateProduct = async () => {
     try {
       let imageUrl = null;
       if (newProduct.image) {
-        const formData = new FormData();
-        formData.append("image", newProduct.image);
-        const uploadRes = await axios.post(
-          "http://localhost:5000/upload",
-          formData,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-          }
-        );
-        imageUrl = uploadRes.data.url;
+        imageUrl = await handleImageUpload(newProduct.image);
       }
 
-      const productData = {
-        name: newProduct.name,
-        type: newProduct.type,
-        materialName: newProduct.materialName,
-        price: newProduct.price,
+      await api.post("/products", {
+        ...newProduct,
         image: imageUrl,
-      };
+      });
 
-      const res = await axios.post(
-        "http://localhost:5000/products",
-        productData
-      );
-      setProducts((prev) => [...prev, res.data]);
       setNewProduct({
         name: "",
         type: "",
@@ -156,21 +150,23 @@ const AdminPage = () => {
         price: "",
         image: null,
       });
+      fetchData();
     } catch (error) {
-      console.error("Ошибка при добавлении товара:", error.message);
+      console.error("Ошибка при создании продукта:", error);
       setError("Не удалось добавить товар. Проверьте данные и сервер.");
     }
   };
 
   const handleDeleteProduct = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/products/${id}`);
+      await api.delete(`/products/${id}`);
       setProducts((prev) => prev.filter((product) => product.id !== id));
       if (selectedProduct && selectedProduct.id === id) {
         setSelectedProduct(null);
       }
+      fetchData();
     } catch (error) {
-      console.error("Ошибка при удалении товара:", error.message);
+      console.error("Ошибка при удалении продукта:", error);
       setError("Не удалось удалить товар.");
     }
   };
@@ -196,41 +192,22 @@ const AdminPage = () => {
     setEditProduct((prev) => ({ ...prev, imageFile: e.target.files[0] }));
   };
 
-  const handleSaveChanges = async () => {
+  const handleUpdateProduct = async () => {
     try {
       let imageUrl = editProduct.image;
-      if (editProduct.imageFile) {
-        const formData = new FormData();
-        formData.append("image", editProduct.imageFile);
-        const uploadRes = await axios.post(
-          "http://localhost:5000/upload",
-          formData,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-          }
-        );
-        imageUrl = uploadRes.data.url;
+      if (typeof editProduct.image !== "string" && editProduct.image) {
+        imageUrl = await handleImageUpload(editProduct.image);
       }
 
-      const updatedProductData = {
-        name: editProduct.name,
-        type: editProduct.type,
-        materialName: editProduct.materialName,
-        price: editProduct.price,
+      await api.put(`/products/${editProduct.id}`, {
+        ...editProduct,
         image: imageUrl,
-      };
+      });
 
-      const res = await axios.put(
-        `http://localhost:5000/products/${editProduct.id}`,
-        updatedProductData
-      );
-      setProducts((prev) =>
-        prev.map((p) => (p.id === editProduct.id ? res.data : p))
-      );
-      setSelectedProduct(res.data);
       setEditProduct(null);
+      fetchData();
     } catch (error) {
-      console.error("Ошибка при сохранении изменений:", error.message);
+      console.error("Ошибка при обновлении продукта:", error);
       setError("Не удалось сохранить изменения.");
     }
   };
@@ -259,35 +236,15 @@ const AdminPage = () => {
     }));
   };
 
-  const handleSaveOrderChanges = async () => {
+  const handleUpdateOrder = async () => {
     try {
-      const updatedOrderData = {
+      await api.put(`/orders/${editOrder.id}`, {
         status: editOrder.status,
-        total: editOrder.total,
-        comment: editOrder.comment,
-        address: editOrder.address,
-        workType: editOrder.workType,
-        products: editOrder.products.map((p) => ({
-          productId: p.productId,
-          quantity: p.quantity,
-        })),
-      };
-
-      const res = await axios.put(
-        `http://localhost:5000/orders/${editOrder.id}`,
-        updatedOrderData,
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
-      );
-
-      setOrders((prev) =>
-        prev.map((o) => (o.id === editOrder.id ? res.data : o))
-      );
-      setSelectedOrder(res.data);
+      });
       setEditOrder(null);
+      fetchData();
     } catch (error) {
-      console.error("Ошибка при сохранении изменений заказа:", error.message);
+      console.error("Ошибка при обновлении заказа:", error);
       setError("Не удалось сохранить изменения заказа.");
     }
   };
@@ -370,32 +327,13 @@ const AdminPage = () => {
     setEditUser((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSaveUserChanges = async () => {
+  const handleUpdateUser = async () => {
     try {
-      const userData = {
-        name: editUser.name,
-        email: editUser.email,
-        phone: editUser.phone,
-        role: editUser.role,
-      };
-
-      const res = await axios.put(
-        `http://localhost:5000/users/${editUser.id}`,
-        userData,
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
-      );
-      setUsers((prev) =>
-        prev.map((u) => (u.id === editUser.id ? res.data : u))
-      );
-      setSelectedUser(res.data);
+      await api.put(`/users/${editUser.id}`, editUser);
       setEditUser(null);
+      fetchData();
     } catch (error) {
-      console.error(
-        "Ошибка при сохранении изменений пользователя:",
-        error.message
-      );
+      console.error("Ошибка при обновлении пользователя:", error);
       setError("Не удалось сохранить изменения пользователя.");
     }
   };
@@ -414,7 +352,7 @@ const AdminPage = () => {
         </div>
 
         <form
-          onSubmit={handleAddProduct}
+          onSubmit={handleCreateProduct}
           role="form"
           className="bg-white p-6 rounded-lg shadow-md mb-8"
         >
@@ -704,7 +642,7 @@ const AdminPage = () => {
                   />
                   <div className="flex justify-end gap-2">
                     <button
-                      onClick={handleSaveChanges}
+                      onClick={handleUpdateProduct}
                       className="bg-green-500 text-white p-2 rounded hover:bg-green-600"
                     >
                       Сохранить
@@ -862,7 +800,7 @@ const AdminPage = () => {
                     )}
                   <div className="flex justify-end gap-2 mt-4">
                     <button
-                      onClick={handleSaveOrderChanges}
+                      onClick={handleUpdateOrder}
                       className="bg-green-500 text-white p-2 rounded hover:bg-green-600"
                     >
                       Сохранить
@@ -1106,7 +1044,7 @@ const AdminPage = () => {
                   </div>
                   <div className="flex justify-end gap-2 mt-4">
                     <button
-                      onClick={handleSaveUserChanges}
+                      onClick={handleUpdateUser}
                       className="bg-green-500 text-white p-2 rounded hover:bg-green-600"
                     >
                       Сохранить

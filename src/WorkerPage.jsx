@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "./config/api";
 import { jwtDecode } from "jwt-decode";
 import Navbar from "./components/Navbar";
 import MaterialsManagement from "./components/MaterialsManagement";
@@ -54,14 +54,11 @@ const WorkerPage = () => {
     const fetchOrders = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem("token");
-        const res = await axios.get("http://localhost:5000/orders/worker", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await api.get("/orders/worker");
         setOrders(res.data);
         setError(null);
       } catch (error) {
-        console.error("Ошибка при загрузке заказов:", error.message);
+        console.error("Ошибка при загрузке заказов:", error);
         setError("Не удалось загрузить заказы.");
       } finally {
         setLoading(false);
@@ -85,30 +82,15 @@ const WorkerPage = () => {
     setEditOrder((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSaveOrderChanges = async () => {
+  const handleStatusChange = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const updatedOrderData = {
+      await api.put(`/orders/worker/${editOrder.id}`, {
         status: editOrder.status,
-      };
-
-      const res = await axios.put(
-        `http://localhost:5000/orders/worker/${editOrder.id}`,
-        updatedOrderData,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      setOrders((prev) =>
-        prev.map((o) => (o.id === editOrder.id ? res.data : o))
-      );
-      setSelectedOrder(res.data);
+      });
+      fetchOrders();
       setEditOrder(null);
-      setError(null);
     } catch (error) {
-      console.error("Ошибка при сохранении изменений заказа:", error.message);
-      setError("Не удалось сохранить изменения заказа.");
+      console.error("Ошибка при обновлении статуса:", error);
     }
   };
 
@@ -209,7 +191,7 @@ const WorkerPage = () => {
                   </div>
                   <div className="flex justify-end gap-2 mt-4">
                     <button
-                      onClick={handleSaveOrderChanges}
+                      onClick={handleStatusChange}
                       className="bg-green-500 text-white p-2 rounded hover:bg-green-600"
                     >
                       Сохранить
