@@ -72,16 +72,16 @@ enum Role {
 }
 
 enum ProductType {
-  RING           // Кольцо
-  CUFFLINKS      // Запонки
-  BROOCH         // Брошь
-  PENDANT        // Кулон
-  WATCH          // Часы
-  NECKLACE       // Подвеска
-  CHAIN          // Цепочка
-  EARRINGS       // Серьги
-  BRACELET       // Браслет
-  CUSTOM_ORDER   // Индивидуальный заказ
+  RING
+  CUFFLINKS
+  BROOCH
+  PENDANT
+  WATCH
+  NECKLACE
+  CHAIN
+  EARRINGS
+  BRACELET
+  CUSTOM_ORDER
 }
 
 model Supplier {
