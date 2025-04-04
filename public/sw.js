@@ -1,5 +1,5 @@
 const CACHE_NAME = "react-trpo-cache-v1";
-const urlsToCache = ["/", "/index.html", "/assets/"];
+const urlsToCache = ["/", "/index.html", "/assets/", "/placeholder.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -10,7 +10,10 @@ self.addEventListener("install", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  if (event.request.url.includes("/api/")) {
+  const url = new URL(event.request.url);
+
+  // Пропускаем запросы к API
+  if (url.pathname.startsWith("/api/")) {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
@@ -37,6 +40,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Для остальных запросов используем стратегию "Network First"
   event.respondWith(
     fetch(event.request)
       .then((response) => {

@@ -338,6 +338,11 @@ const AdminPage = () => {
     }
   };
 
+  const handleImageError = (e) => {
+    console.error("Ошибка загрузки изображения:", e);
+    e.target.src = "/placeholder.png";
+  };
+
   return (
     <>
       <Navbar />
@@ -458,16 +463,10 @@ const AdminPage = () => {
                 onClick={() => handleOpenModal(product)}
               >
                 <img
-                  src={
-                    product.image ||
-                    "https://via.placeholder.com/300x200?text=Нет+изображения"
-                  }
+                  src={product.image || "/placeholder.png"}
                   alt={product.name}
+                  onError={handleImageError}
                   className="w-full h-48 object-cover rounded-lg mb-2"
-                  onError={(e) => {
-                    e.target.src =
-                      "https://via.placeholder.com/300x200?text=Нет+изображения";
-                  }}
                 />
                 <h3 className="text-lg font-semibold">{product.name}</h3>
                 <p>Тип: {product.type}</p>
@@ -578,16 +577,10 @@ const AdminPage = () => {
             <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md max-h-[80vh] overflow-y-auto mt-16">
               <h2 className="text-xl font-semibold mb-4">Детали товара</h2>
               <img
-                src={
-                  selectedProduct.image ||
-                  "https://via.placeholder.com/300x200?text=Нет+изображения"
-                }
+                src={selectedProduct.image || "/placeholder.png"}
                 alt={selectedProduct.name}
+                onError={handleImageError}
                 className="w-full h-48 object-cover rounded-lg mb-4"
-                onError={(e) => {
-                  e.target.src =
-                    "https://via.placeholder.com/300x200?text=Нет+изображения";
-                }}
               />
               {editProduct ? (
                 <>
