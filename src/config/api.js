@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL =
+  import.meta.env.VITE_API_URL || "https://react-trpo.vercel.app/api";
 
 const api = axios.create({
   baseURL: API_URL,
@@ -27,6 +28,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    console.error("API Error:", error.response?.data || error.message);
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
     }

@@ -11,12 +11,29 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.url.includes("/api/")) {
+    event.respondWith(
+      fetch(event.request).catch((error) => {
+        console.error("API fetch error:", error);
+        return new Response(JSON.stringify({ error: "Network error" }), {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        });
+      })
+    );
     return;
   }
 
   event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request);
-    })
+    fetch(event.request)
+      .then((response) => {
+        const responseClone = response.clone();
+        caches.open("v1").then((cache) => {
+          cache.put(event.request, responseClone);
+        });
+        return response;
+      })
+      .catch(() => {
+        return caches.match(event.request);
+      })
   );
 });
