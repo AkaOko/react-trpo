@@ -254,6 +254,47 @@ export default async function handler(req, res) {
           return res.status(500).json({ error: "Ошибка при получении заявок" });
         }
 
+      // Обновление данных пользователя
+      case path === "/api/users/:id" && req.method === "PUT":
+        try {
+          const user = verifyToken(req);
+          if (user.role !== "ADMIN") {
+            return res.status(403).json({
+              error: "Доступ запрещен. Требуются права администратора.",
+            });
+          }
+
+          const { id } = req.params;
+          const { name, email, phone, role } = req.body;
+
+          const updatedUser = await prisma.user.update({
+            where: { id },
+            data: {
+              name,
+              email,
+              phone,
+              role,
+            },
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+              role: true,
+            },
+          });
+
+          return res.json(updatedUser);
+        } catch (error) {
+          console.error("Ошибка при обновлении пользователя:", error);
+          if (error.code === "P2025") {
+            return res.status(404).json({ error: "Пользователь не найден" });
+          }
+          return res
+            .status(500)
+            .json({ error: "Не удалось обновить данные пользователя" });
+        }
+
       default:
         console.log("Route not found:", path);
         return res.status(404).json({ error: "Route not found" });

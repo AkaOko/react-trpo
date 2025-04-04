@@ -329,12 +329,20 @@ const AdminPage = () => {
 
   const handleUpdateUser = async () => {
     try {
-      await api.put(`/users/${editUser.id}`, editUser);
-      setEditUser(null);
-      fetchData();
+      const response = await api.put(`/users/${editUser.id}`, editUser);
+      if (response.data) {
+        setEditUser(null);
+        fetchData();
+      }
     } catch (error) {
       console.error("Ошибка при обновлении пользователя:", error);
-      setError("Не удалось сохранить изменения пользователя.");
+      if (error.response?.status === 403) {
+        setError("Доступ запрещен. Требуются права администратора.");
+      } else if (error.response?.status === 404) {
+        setError("Пользователь не найден.");
+      } else {
+        setError("Не удалось сохранить изменения пользователя.");
+      }
     }
   };
 
