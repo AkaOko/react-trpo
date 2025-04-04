@@ -377,6 +377,44 @@ export default async function handler(req, res) {
           return res.status(500).json({ error: "Не удалось обновить заявку" });
         }
 
+      // Обновление продукта
+      case path.startsWith("/api/products/") && req.method === "PUT":
+        try {
+          const user = verifyToken(req);
+          if (user.role !== "ADMIN") {
+            return res.status(403).json({
+              error: "Доступ запрещен. Требуются права администратора.",
+            });
+          }
+
+          const id = path.split("/").pop();
+          const { name, description, price, image, materialId } = req.body;
+
+          const updatedProduct = await prisma.product.update({
+            where: { id },
+            data: {
+              name,
+              description,
+              price,
+              image,
+              materialId,
+            },
+            include: {
+              material: true,
+            },
+          });
+
+          return res.json(updatedProduct);
+        } catch (error) {
+          console.error("Ошибка при обновлении продукта:", error);
+          if (error.code === "P2025") {
+            return res.status(404).json({ error: "Продукт не найден" });
+          }
+          return res
+            .status(500)
+            .json({ error: "Не удалось обновить данные продукта" });
+        }
+
       default:
         console.log("Route not found:", path);
         return res.status(404).json({ error: "Route not found" });

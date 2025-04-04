@@ -199,16 +199,26 @@ const AdminPage = () => {
         imageUrl = await handleImageUpload(editProduct.image);
       }
 
-      await api.put(`/products/${editProduct.id}`, {
+      const response = await api.put(`/products/${editProduct.id}`, {
         ...editProduct,
         image: imageUrl,
       });
 
-      setEditProduct(null);
-      fetchData();
+      if (response.data) {
+        setEditProduct(null);
+        // Обновляем список продуктов
+        const productsRes = await api.get("/products");
+        setProducts(productsRes.data);
+      }
     } catch (error) {
       console.error("Ошибка при обновлении продукта:", error);
-      setError("Не удалось сохранить изменения.");
+      if (error.response?.status === 403) {
+        setError("Доступ запрещен. Требуются права администратора.");
+      } else if (error.response?.status === 404) {
+        setError("Продукт не найден.");
+      } else {
+        setError("Не удалось сохранить изменения.");
+      }
     }
   };
 
@@ -238,14 +248,24 @@ const AdminPage = () => {
 
   const handleUpdateOrder = async () => {
     try {
-      await api.put(`/orders/${editOrder.id}`, {
+      const response = await api.put(`/orders/${editOrder.id}`, {
         status: editOrder.status,
       });
-      setEditOrder(null);
-      fetchData();
+      if (response.data) {
+        setEditOrder(null);
+        // Обновляем список заказов
+        const ordersRes = await api.get("/orders");
+        setOrders(ordersRes.data);
+      }
     } catch (error) {
       console.error("Ошибка при обновлении заказа:", error);
-      setError("Не удалось сохранить изменения заказа.");
+      if (error.response?.status === 403) {
+        setError("Доступ запрещен. Требуются права администратора.");
+      } else if (error.response?.status === 404) {
+        setError("Заказ не найден.");
+      } else {
+        setError("Не удалось сохранить изменения заказа.");
+      }
     }
   };
 
@@ -332,7 +352,9 @@ const AdminPage = () => {
       const response = await api.put(`/users/${editUser.id}`, editUser);
       if (response.data) {
         setEditUser(null);
-        fetchData();
+        // Обновляем список пользователей
+        const usersRes = await api.get("/users");
+        setUsers(usersRes.data);
       }
     } catch (error) {
       console.error("Ошибка при обновлении пользователя:", error);
