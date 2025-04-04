@@ -178,7 +178,18 @@ export default async function handler(req, res) {
       // Получение списка типов продуктов
       case path === "/api/product-types" && req.method === "GET":
         try {
-          const productTypes = Object.values(prisma.ProductType);
+          const productTypes = [
+            "RING",
+            "CUFFLINKS",
+            "BROOCH",
+            "PENDANT",
+            "WATCH",
+            "NECKLACE",
+            "CHAIN",
+            "EARRINGS",
+            "BRACELET",
+            "CUSTOM_ORDER",
+          ];
           return res.json(productTypes);
         } catch (error) {
           console.error("Product types error:", error);

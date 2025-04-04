@@ -12,13 +12,23 @@ self.addEventListener("install", (event) => {
 self.addEventListener("fetch", (event) => {
   if (event.request.url.includes("/api/")) {
     event.respondWith(
-      fetch(event.request).catch((error) => {
-        console.error("API fetch error:", error);
-        return new Response(JSON.stringify({ error: "Network error" }), {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        });
-      })
+      fetch(event.request)
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response;
+        })
+        .catch((error) => {
+          console.error("API fetch error:", error);
+          return new Response(
+            JSON.stringify({ error: "Network error", details: error.message }),
+            {
+              status: 500,
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+        })
     );
     return;
   }
@@ -33,7 +43,15 @@ self.addEventListener("fetch", (event) => {
         return response;
       })
       .catch(() => {
-        return caches.match(event.request);
+        return caches.match(event.request).then((response) => {
+          if (response) {
+            return response;
+          }
+          return new Response(JSON.stringify({ error: "Network error" }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          });
+        });
       })
   );
 });
