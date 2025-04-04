@@ -9,7 +9,15 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = async () => {
+  const handleLogin = async (e) => {
+    e.preventDefault(); // Предотвращаем стандартное поведение формы
+
+    // Валидация
+    if (!email || !password) {
+      setError("Пожалуйста, заполните все поля");
+      return;
+    }
+
     try {
       setError("");
       setLoading(true);
@@ -17,8 +25,20 @@ export default function Login() {
         email,
         password,
       });
-      localStorage.setItem("token", data.token);
-      navigate("/");
+
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+        // Редирект в зависимости от роли пользователя
+        if (data.role === "ADMIN") {
+          navigate("/admin");
+        } else if (data.role === "WORKER") {
+          navigate("/worker");
+        } else {
+          navigate("/");
+        }
+      } else {
+        setError("Ошибка авторизации: токен не получен");
+      }
     } catch (error) {
       console.error("Ошибка входа:", error);
       if (error.response?.data?.error) {
@@ -42,31 +62,35 @@ export default function Login() {
             {error}
           </div>
         )}
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email"
-          className="w-full p-3 mb-4 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-          disabled={loading}
-        />
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Пароль"
-          className="w-full p-3 mb-6 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-          disabled={loading}
-        />
-        <button
-          onClick={handleLogin}
-          disabled={loading}
-          className={`w-full bg-gradient-to-r from-gray-800 to-gray-900 text-white p-3 rounded-lg hover:from-emerald-500 hover:to-emerald-600 transition-all duration-300 ${
-            loading ? "opacity-50 cursor-not-allowed" : ""
-          }`}
-        >
-          {loading ? "Вход..." : "Войти"}
-        </button>
+        <form onSubmit={handleLogin}>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email"
+            className="w-full p-3 mb-4 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+            disabled={loading}
+            required
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Пароль"
+            className="w-full p-3 mb-6 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+            disabled={loading}
+            required
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full bg-gradient-to-r from-gray-800 to-gray-900 text-white p-3 rounded-lg hover:from-emerald-500 hover:to-emerald-600 transition-all duration-300 ${
+              loading ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+          >
+            {loading ? "Вход..." : "Войти"}
+          </button>
+        </form>
       </div>
     </div>
   );
