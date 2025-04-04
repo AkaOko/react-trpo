@@ -20,7 +20,7 @@ const MaterialsManagement = () => {
       }
 
       try {
-        const response = await axios.get("http://localhost:5000/profile", {
+        const response = await axios.get("/api/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
         console.log("Профиль пользователя:", response.data);
@@ -40,7 +40,7 @@ const MaterialsManagement = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:5000/materials", {
+      const response = await axios.get("/api/materials", {
         headers: { Authorization: `Bearer ${token}` },
       });
       console.log(
@@ -65,12 +65,9 @@ const MaterialsManagement = () => {
         setError("Необходима авторизация");
         return;
       }
-      const response = await axios.get(
-        "http://localhost:5000/material-requests",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await axios.get("/api/material-requests", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setRequests(response.data || []);
       setError(null);
     } catch (error) {
@@ -108,7 +105,7 @@ const MaterialsManagement = () => {
         "Выбранный материал:",
         materials.find((m) => m.id === newRequest.materialId)
       );
-      await axios.post("http://localhost:5000/material-requests", newRequest, {
+      await axios.post("/api/material-requests", newRequest, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchRequests();

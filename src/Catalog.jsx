@@ -266,15 +266,11 @@ export default function Catalog() {
                       data-testid="product-card"
                     >
                       <img
-                        src={
-                          product.image ||
-                          "http://localhost:5000/uploads/default-image.jpg"
-                        }
+                        src={product.image || "/images/placeholder.svg"}
                         alt={product.name}
                         className="w-full h-48 object-cover"
                         onError={(e) => {
-                          e.target.src =
-                            "http://localhost:5000/uploads/default-image.jpg";
+                          e.target.src = "/images/placeholder.svg";
                         }}
                       />
                       <div className="p-4">

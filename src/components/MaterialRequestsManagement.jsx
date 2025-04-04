@@ -18,12 +18,9 @@ const MaterialRequestsManagement = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const response = await axios.get(
-        "http://localhost:5000/material-requests",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await axios.get("/api/material-requests", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       // Фильтруем только невыполненные заявки
       setRequests(
         response.data.filter((request) => request.status !== "COMPLETED")
@@ -40,7 +37,7 @@ const MaterialRequestsManagement = () => {
   const fetchMaterials = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:5000/materials", {
+      const response = await axios.get("/api/materials", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setMaterials(response.data);
@@ -54,7 +51,7 @@ const MaterialRequestsManagement = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `http://localhost:5000/material-requests/${requestId}`,
+        `/api/material-requests/${requestId}`,
         { status: newStatus },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -73,7 +70,7 @@ const MaterialRequestsManagement = () => {
       const { materialId, quantity } = editRequest;
 
       await axios.put(
-        `http://localhost:5000/material-requests/${requestId}`,
+        `/api/material-requests/${requestId}`,
         { materialId, quantity },
         {
           headers: { Authorization: `Bearer ${token}` },

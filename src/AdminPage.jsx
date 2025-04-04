@@ -340,7 +340,7 @@ const AdminPage = () => {
 
   const handleImageError = (e) => {
     console.error("Ошибка загрузки изображения:", e);
-    e.target.src = "/placeholder.png";
+    e.target.src = "/images/placeholder.svg";
   };
 
   return (
@@ -463,7 +463,7 @@ const AdminPage = () => {
                 onClick={() => handleOpenModal(product)}
               >
                 <img
-                  src={product.image || "/placeholder.png"}
+                  src={product.image || "/images/placeholder.svg"}
                   alt={product.name}
                   onError={handleImageError}
                   className="w-full h-48 object-cover rounded-lg mb-2"
@@ -577,7 +577,7 @@ const AdminPage = () => {
             <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md max-h-[80vh] overflow-y-auto mt-16">
               <h2 className="text-xl font-semibold mb-4">Детали товара</h2>
               <img
-                src={selectedProduct.image || "/placeholder.png"}
+                src={selectedProduct.image || "/images/placeholder.svg"}
                 alt={selectedProduct.name}
                 onError={handleImageError}
                 className="w-full h-48 object-cover rounded-lg mb-4"
