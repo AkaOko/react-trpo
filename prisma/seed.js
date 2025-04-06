@@ -80,27 +80,6 @@ async function main() {
       }),
     ]);
 
-    // Создаем типы продуктов
-    const productTypes = await Promise.all([
-      prisma.productType.upsert({
-        where: { name: "Кольцо" },
-        update: {},
-        create: { name: "Кольцо" },
-      }),
-      prisma.productType.create({
-        data: { name: "Серьги" },
-      }),
-      prisma.productType.create({
-        data: { name: "Подвеска" },
-      }),
-      prisma.productType.create({
-        data: { name: "Браслет" },
-      }),
-      prisma.productType.create({
-        data: { name: "Цепь" },
-      }),
-    ]);
-
     // Создаем продукты
     const products = await Promise.all([
       prisma.product.upsert({

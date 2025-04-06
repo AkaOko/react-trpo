@@ -44,17 +44,17 @@ model Material {
 }
 
 model Order {
-  id        String         @id @default(cuid())
-  user      User           @relation(fields: [userId], references: [id])
-  userId    String
-  status    String         @default("Новый")
-  total     Float
-  comment   String?
-  address   String?
-  workType  String?
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-  products  OrderProduct[]
+  id           String         @id @default(cuid())
+  user         User           @relation(fields: [userId], references: [id])
+  userId       String
+  status       String         @default("PENDING")
+  totalAmount  Float
+  comment      String?
+  address      String?
+  workType     String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  items        OrderProduct[]
 }
 
 model OrderProduct {
@@ -64,18 +64,22 @@ model OrderProduct {
   product   Product  @relation(fields: [productId], references: [id])
   productId String
   quantity  Int
+  price     Float
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model MaterialRequest {
-  id        String   @id @default(cuid())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String
-  material  Material @relation(fields: [materialId], references: [id])
-  materialId String
-  quantity  Int
-  status    String   @default("PENDING")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(cuid())
+  user            User     @relation(fields: [requestedById], references: [id])
+  requestedById   String
+  approvedBy      User?    @relation(fields: [approvedById], references: [id])
+  approvedById    String?
+  material        Material @relation(fields: [materialId], references: [id])
+  materialId      String
+  quantity        Int
+  status          String   @default("PENDING")
+  rejectionReason String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 } 
