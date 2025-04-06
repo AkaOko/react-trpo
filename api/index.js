@@ -57,16 +57,15 @@ const testDbConnection = async () => {
 const corsOptions = {
   origin: function (origin, callback) {
     const allowedOrigins = [
-      "https://react-trpo.vercel.app",
+      "https://react-trpo-1xbig9kki-akaokos-projects.vercel.app",
       "http://localhost:5173",
       "http://localhost:5000",
-      "https://api.react-trpo.vercel.app",
-      "https://react-trpo-last-okm9vxtr7-akaokos-projects.vercel.app",
     ];
 
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
+      console.error("CORS error for origin:", origin);
       callback(new Error("Not allowed by CORS"));
     }
   },

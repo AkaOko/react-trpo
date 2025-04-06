@@ -6,6 +6,10 @@
     {
       "source": "/api/(.*)",
       "destination": "/api/index.js"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
@@ -14,7 +18,7 @@
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "https://react-trpo.vercel.app"
+          "value": "https://react-trpo-1xbig9kki-akaokos-projects.vercel.app"
         },
         {
           "key": "Access-Control-Allow-Methods",
@@ -34,6 +38,6 @@
   "env": {
     "DATABASE_URL": "@database_url",
     "JWT_SECRET": "@jwt_secret",
-    "CORS_ORIGIN": "https://react-trpo.vercel.app"
+    "CORS_ORIGIN": "https://react-trpo-1xbig9kki-akaokos-projects.vercel.app"
   }
 }
