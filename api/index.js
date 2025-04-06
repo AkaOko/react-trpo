@@ -14,11 +14,20 @@ const __dirname = path.dirname(__filename);
 const app = express();
 let prisma;
 
+// Улучшенное логирование
+const logError = (error, context) => {
+  console.error(`[${new Date().toISOString()}] Error in ${context}:`, {
+    message: error.message,
+    stack: error.stack,
+    code: error.code,
+  });
+};
+
 try {
   prisma = new PrismaClient();
   console.log("Prisma client initialized successfully");
 } catch (error) {
-  console.error("Failed to initialize Prisma client:", error);
+  logError(error, "Prisma initialization");
   process.exit(1);
 }
 
@@ -33,11 +42,16 @@ const allowedOrigins = [
 
 // Верификация JWT токена
 const verifyToken = (req) => {
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) {
-    throw new Error("No token provided");
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) {
+      throw new Error("No token provided");
+    }
+    return jwt.verify(token, "your-secret-key");
+  } catch (error) {
+    logError(error, "Token verification");
+    throw error;
   }
-  return jwt.verify(token, "your-secret-key");
 };
 
 // Проверка подключения к базе данных
@@ -47,10 +61,20 @@ async function testDbConnection() {
     console.log("Database connection successful");
     return true;
   } catch (error) {
-    console.error("Database connection error:", error);
+    logError(error, "Database connection");
     return false;
   }
 }
+
+// Глобальный обработчик ошибок
+app.use((err, req, res, next) => {
+  logError(err, "Global error handler");
+  res.status(500).json({
+    error: "Internal server error",
+    message: err.message,
+    timestamp: new Date().toISOString(),
+  });
+});
 
 // Добавляем обработку загрузки файлов
 const uploadsDir = path.join(process.cwd(), "uploads");
