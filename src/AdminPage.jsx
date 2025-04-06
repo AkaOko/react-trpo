@@ -266,7 +266,10 @@ const AdminPage = () => {
 
   const handleEditOrderChange = (e) => {
     const { name, value } = e.target;
-    setEditOrder((prev) => ({ ...prev, [name]: value }));
+    setEditOrder((prev) => ({
+      ...prev,
+      [name]: name === "total" ? parseFloat(value) || 0 : value,
+    }));
   };
 
   const handleEditOrderProductChange = (productId, value) => {
@@ -280,29 +283,30 @@ const AdminPage = () => {
 
   const handleUpdateOrder = async () => {
     try {
+      setLoading(true);
       const response = await adminApi.updateOrder(editOrder.id, {
         status: editOrder.status,
-        total: editOrder.total,
+        total: parseFloat(editOrder.total) || 0,
         products: editOrder.products,
         comment: editOrder.comment,
         address: editOrder.address,
         workType: editOrder.workType,
       });
-      if (response.data) {
+
+      if (response?.data) {
+        setOrders(
+          orders.map((order) =>
+            order.id === editOrder.id ? response.data : order
+          )
+        );
         setEditOrder(null);
-        // Обновляем список заказов
-        const ordersRes = await adminApi.getOrders();
-        setOrders(ordersRes.data);
+        setSelectedOrder(response.data);
       }
     } catch (error) {
       console.error("Ошибка при обновлении заказа:", error);
-      if (error.response?.status === 403) {
-        setError("Доступ запрещен. Требуются права администратора.");
-      } else if (error.response?.status === 404) {
-        setError("Заказ не найден.");
-      } else {
-        setError("Не удалось сохранить изменения заказа.");
-      }
+      setError("Не удалось обновить заказ. Пожалуйста, попробуйте позже.");
+    } finally {
+      setLoading(false);
     }
   };
 
