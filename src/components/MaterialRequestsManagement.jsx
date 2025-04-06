@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
-import adminApi from "../config/api";
+import { adminApi } from "../config/api";
 
 const MaterialRequestsManagement = () => {
   const [requests, setRequests] = useState([]);

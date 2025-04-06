@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
 import Navbar from "./components/Navbar";
 import MaterialRequestsManagement from "./components/MaterialRequestsManagement";
-import adminApi from "./config/api";
+import { adminApi } from "./config/api";
 import {
   TableContainer,
   Table,
