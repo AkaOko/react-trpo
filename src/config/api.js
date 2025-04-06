@@ -8,6 +8,7 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true,
 });
 
 // Добавляем перехватчик запросов
@@ -28,7 +29,13 @@ api.interceptors.request.use(
 
 // Добавляем перехватчик ответов для обработки ошибок
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log("Response received:", {
+      status: response.status,
+      data: response.data,
+    });
+    return response;
+  },
   (error) => {
     console.error("API Error:", {
       error: error.response?.data?.error || "Network error",
@@ -36,10 +43,12 @@ api.interceptors.response.use(
       url: error.config?.url,
       status: error.response?.status,
     });
+
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
       window.location.href = "/login";
     }
+
     return Promise.reject(error);
   }
 );
