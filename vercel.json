@@ -8,14 +8,9 @@
       "destination": "/api/index.js"
     }
   ],
-  "env": {
-    "DATABASE_URL": "postgresql://postgres:MQRQEwMGXZejgslNSnkwYvvjctTzQghP@gondola.proxy.rlwy.net:19520/railway",
-    "JWT_SECRET": "your-secret-key",
-    "CORS_ORIGIN": "https://react-trpo.vercel.app"
-  },
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/api/(.*)",
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
@@ -35,5 +30,10 @@
         }
       ]
     }
-  ]
+  ],
+  "env": {
+    "DATABASE_URL": "@database_url",
+    "JWT_SECRET": "@jwt_secret",
+    "CORS_ORIGIN": "https://react-trpo.vercel.app"
+  }
 }
