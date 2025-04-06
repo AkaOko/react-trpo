@@ -15,16 +15,18 @@ async function main() {
 
     // Создаем пользователей (10+)
     const adminPassword = await bcrypt.hash("admin", 10);
-    const workerPassword = await bcrypt.hash("worker", 10);
+    const workerPassword = await bcrypt.hash("admin", 10);
     const clientPassword = await bcrypt.hash("client123", 10);
 
     const admin = await prisma.user.create({
       data: {
         name: "Администратор",
-        email: "admin@example.com",
+        email: "admin@gmail.com",
         password: adminPassword,
         role: "ADMIN",
         phone: "+79001234567",
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
     });
 
@@ -32,10 +34,12 @@ async function main() {
       prisma.user.create({
         data: {
           name: "Иванов Иван Иванович",
-          email: "worker@example.com",
+          email: "worker@gmail.com",
           password: workerPassword,
           role: "WORKER",
           phone: "+79876543210",
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.user.create({
@@ -45,6 +49,8 @@ async function main() {
           password: workerPassword,
           role: "WORKER",
           phone: "+79876543211",
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.user.create({
@@ -54,6 +60,8 @@ async function main() {
           password: workerPassword,
           role: "WORKER",
           phone: "+79876543212",
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.user.create({
@@ -63,6 +71,8 @@ async function main() {
           password: clientPassword,
           role: "CLIENT",
           phone: "+79876543213",
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.user.create({
@@ -72,6 +82,8 @@ async function main() {
           password: clientPassword,
           role: "CLIENT",
           phone: "+79876543214",
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.user.create({
@@ -81,6 +93,8 @@ async function main() {
           password: clientPassword,
           role: "CLIENT",
           phone: "+79876543215",
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.user.create({
@@ -90,6 +104,8 @@ async function main() {
           password: clientPassword,
           role: "CLIENT",
           phone: "+79876543216",
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.user.create({
@@ -99,6 +115,8 @@ async function main() {
           password: clientPassword,
           role: "CLIENT",
           phone: "+79876543217",
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.user.create({
@@ -108,6 +126,8 @@ async function main() {
           password: clientPassword,
           role: "CLIENT",
           phone: "+79876543218",
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.user.create({
@@ -117,62 +137,110 @@ async function main() {
           password: clientPassword,
           role: "CLIENT",
           phone: "+79876543219",
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
     ]);
 
     // Создаем материалы (12+) с более точными описаниями для ювелирной мастерской
     const materials = await Promise.all([
-      prisma.material.upsert({
-        where: { name: "Золото 585 пробы (красное)" },
-        update: {},
-        create: { name: "Золото 585 пробы (красное)" },
+      prisma.material.create({
+        data: {
+          name: "Золото 585 пробы (красное)",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       }),
       prisma.material.create({
-        data: { name: "Золото 750 пробы (белое)" },
+        data: {
+          name: "Золото 750 пробы (белое)",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       }),
       prisma.material.create({
-        data: { name: "Серебро 925 пробы (родированное)" },
+        data: {
+          name: "Серебро 925 пробы (родированное)",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       }),
       prisma.material.create({
-        data: { name: "Платина 950 пробы" },
+        data: {
+          name: "Платина 950 пробы",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       }),
       prisma.material.create({
-        data: { name: "Палладий 950 пробы" },
+        data: {
+          name: "Палладий 950 пробы",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       }),
       prisma.material.create({
-        data: { name: "Золото 585 пробы (белое)" },
+        data: {
+          name: "Золото 585 пробы (белое)",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       }),
       prisma.material.create({
-        data: { name: "Золото 750 пробы (розовое)" },
+        data: {
+          name: "Золото 750 пробы (розовое)",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       }),
       prisma.material.create({
-        data: { name: "Платина 900 пробы" },
+        data: {
+          name: "Платина 900 пробы",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       }),
       prisma.material.create({
-        data: { name: "Родий (для покрытия)" },
+        data: {
+          name: "Родий (для покрытия)",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       }),
       prisma.material.create({
-        data: { name: "Серебро 925 пробы (оксидированное)" },
+        data: {
+          name: "Серебро 925 пробы (оксидированное)",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       }),
       prisma.material.create({
-        data: { name: "Золото 585 пробы (жёлтое)" },
+        data: {
+          name: "Золото 585 пробы (жёлтое)",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       }),
       prisma.material.create({
-        data: { name: "Серебро 999 пробы" },
+        data: {
+          name: "Серебро 999 пробы",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       }),
     ]);
 
     // Создаем продукты (12+) с детальными описаниями ювелирных изделий
     const products = await Promise.all([
-      prisma.product.upsert({
-        where: { name: "Кольцо обручальное классическое" },
-        update: {},
-        create: {
+      prisma.product.create({
+        data: {
           name: "Кольцо обручальное классическое",
           type: "Кольцо",
           price: 25000,
-          materialId: materials[0].id, // красное золото 585
+          materialId: materials[0].id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.product.create({
@@ -180,7 +248,9 @@ async function main() {
           name: "Кольцо с бриллиантом 0.5 карат",
           type: "Кольцо",
           price: 185000,
-          materialId: materials[1].id, // белое золото 750
+          materialId: materials[1].id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.product.create({
@@ -188,7 +258,9 @@ async function main() {
           name: "Серьги-пусеты с бриллиантами",
           type: "Серьги",
           price: 78000,
-          materialId: materials[1].id, // белое золото 750
+          materialId: materials[1].id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.product.create({
@@ -196,7 +268,9 @@ async function main() {
           name: "Подвеска с сапфиром и бриллиантами",
           type: "Подвеска",
           price: 95000,
-          materialId: materials[6].id, // розовое золото 750
+          materialId: materials[6].id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.product.create({
@@ -204,7 +278,9 @@ async function main() {
           name: "Браслет теннисный с бриллиантами",
           type: "Браслет",
           price: 245000,
-          materialId: materials[1].id, // белое золото 750
+          materialId: materials[1].id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.product.create({
@@ -212,7 +288,9 @@ async function main() {
           name: "Цепь Бисмарк с алмазной гранью",
           type: "Цепь",
           price: 85000,
-          materialId: materials[0].id, // красное золото 585
+          materialId: materials[0].id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.product.create({
@@ -220,7 +298,9 @@ async function main() {
           name: "Кольцо с изумрудом и бриллиантами",
           type: "Кольцо",
           price: 280000,
-          materialId: materials[1].id, // белое золото 750
+          materialId: materials[1].id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.product.create({
@@ -228,7 +308,9 @@ async function main() {
           name: "Серьги с танзанитами и бриллиантами",
           type: "Серьги",
           price: 195000,
-          materialId: materials[1].id, // белое золото 750
+          materialId: materials[1].id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.product.create({
@@ -236,7 +318,9 @@ async function main() {
           name: "Колье с жемчугом Акойя и бриллиантами",
           type: "Колье",
           price: 365000,
-          materialId: materials[1].id, // белое золото 750
+          materialId: materials[1].id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.product.create({
@@ -244,7 +328,9 @@ async function main() {
           name: "Брошь Орхидея с бриллиантами",
           type: "Брошь",
           price: 435000,
-          materialId: materials[6].id, // розовое золото 750
+          materialId: materials[6].id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.product.create({
@@ -252,7 +338,9 @@ async function main() {
           name: "Кольцо мужское с черными бриллиантами",
           type: "Кольцо",
           price: 142000,
-          materialId: materials[5].id, // белое золото 585
+          materialId: materials[5].id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.product.create({
@@ -260,7 +348,9 @@ async function main() {
           name: "Серьги с рубинами и бриллиантами",
           type: "Серьги",
           price: 225000,
-          materialId: materials[1].id, // белое золото 750
+          materialId: materials[1].id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
     ]);
@@ -275,11 +365,15 @@ async function main() {
           comment: "Гравировка даты свадьбы внутри",
           address: "ул. Ленина, 1",
           workType: "Изготовление обручального кольца",
+          createdAt: new Date(),
+          updatedAt: new Date(),
           items: {
             create: {
               productId: products[0].id,
               quantity: 1,
               price: 25000,
+              createdAt: new Date(),
+              updatedAt: new Date(),
             },
           },
         },
@@ -292,11 +386,15 @@ async function main() {
           comment: "Размер 16.5, огранка бриллианта круглая",
           address: "ул. Пушкина, 10",
           workType: "Изготовление помолвочного кольца",
+          createdAt: new Date(),
+          updatedAt: new Date(),
           items: {
             create: {
               productId: products[1].id,
               quantity: 1,
               price: 185000,
+              createdAt: new Date(),
+              updatedAt: new Date(),
             },
           },
         },
@@ -309,11 +407,15 @@ async function main() {
           comment: "Закрепка бриллиантов в крапанах",
           address: "пр. Мира, 15",
           workType: "Изготовление серег",
+          createdAt: new Date(),
+          updatedAt: new Date(),
           items: {
             create: {
               productId: products[2].id,
               quantity: 1,
               price: 78000,
+              createdAt: new Date(),
+              updatedAt: new Date(),
             },
           },
         },
@@ -326,11 +428,15 @@ async function main() {
           comment: "Замена замка и чистка изделия",
           address: "ул. Гагарина, 5",
           workType: "Ремонт цепочки",
+          createdAt: new Date(),
+          updatedAt: new Date(),
           items: {
             create: {
               productId: products[5].id,
               quantity: 1,
               price: 15000,
+              createdAt: new Date(),
+              updatedAt: new Date(),
             },
           },
         },
@@ -343,11 +449,15 @@ async function main() {
           comment: "Общий вес бриллиантов 2.5 карата",
           address: "ул. Советская, 20",
           workType: "Изготовление браслета",
+          createdAt: new Date(),
+          updatedAt: new Date(),
           items: {
             create: {
               productId: products[4].id,
               quantity: 1,
               price: 245000,
+              createdAt: new Date(),
+              updatedAt: new Date(),
             },
           },
         },
@@ -360,11 +470,15 @@ async function main() {
           comment: "Длина 60 см, карабиновый замок",
           address: "пр. Ленина, 30",
           workType: "Изготовление цепи",
+          createdAt: new Date(),
+          updatedAt: new Date(),
           items: {
             create: {
               productId: products[5].id,
               quantity: 1,
               price: 85000,
+              createdAt: new Date(),
+              updatedAt: new Date(),
             },
           },
         },
@@ -377,11 +491,15 @@ async function main() {
           comment: "Изумруд колумбийский 1.2 карата",
           address: "ул. Кирова, 25",
           workType: "Изготовление кольца",
+          createdAt: new Date(),
+          updatedAt: new Date(),
           items: {
             create: {
               productId: products[6].id,
               quantity: 1,
               price: 280000,
+              createdAt: new Date(),
+              updatedAt: new Date(),
             },
           },
         },
@@ -394,11 +512,15 @@ async function main() {
           comment: "Танзаниты грушевидной огранки",
           address: "ул. Ленина, 1",
           workType: "Изготовление серег",
+          createdAt: new Date(),
+          updatedAt: new Date(),
           items: {
             create: {
               productId: products[7].id,
               quantity: 1,
               price: 195000,
+              createdAt: new Date(),
+              updatedAt: new Date(),
             },
           },
         },
@@ -411,11 +533,15 @@ async function main() {
           comment: "Жемчуг диаметром 7-7.5 мм",
           address: "ул. Пушкина, 10",
           workType: "Изготовление колье",
+          createdAt: new Date(),
+          updatedAt: new Date(),
           items: {
             create: {
               productId: products[8].id,
               quantity: 1,
               price: 365000,
+              createdAt: new Date(),
+              updatedAt: new Date(),
             },
           },
         },
@@ -428,11 +554,15 @@ async function main() {
           comment: "Реставрация закрепки камней",
           address: "пр. Мира, 15",
           workType: "Ремонт броши",
+          createdAt: new Date(),
+          updatedAt: new Date(),
           items: {
             create: {
               productId: products[9].id,
               quantity: 1,
               price: 25000,
+              createdAt: new Date(),
+              updatedAt: new Date(),
             },
           },
         },
@@ -444,91 +574,111 @@ async function main() {
       prisma.materialRequest.create({
         data: {
           materialId: materials[0].id,
-          quantity: 500, // граммы
+          quantity: 500,
           status: "APPROVED",
           requestedById: users[0].id,
           approvedById: admin.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.materialRequest.create({
         data: {
           materialId: materials[1].id,
-          quantity: 300, // граммы
+          quantity: 300,
           status: "PENDING",
           requestedById: users[1].id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.materialRequest.create({
         data: {
           materialId: materials[2].id,
-          quantity: 1000, // граммы
+          quantity: 1000,
           status: "REJECTED",
           requestedById: users[2].id,
           approvedById: admin.id,
           rejectionReason: "Превышен квартальный лимит закупки драгметаллов",
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.materialRequest.create({
         data: {
           materialId: materials[3].id,
-          quantity: 100, // граммы
+          quantity: 100,
           status: "APPROVED",
           requestedById: users[0].id,
           approvedById: admin.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.materialRequest.create({
         data: {
           materialId: materials[4].id,
-          quantity: 50, // граммы
+          quantity: 50,
           status: "PENDING",
           requestedById: users[1].id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.materialRequest.create({
         data: {
           materialId: materials[5].id,
-          quantity: 200, // граммы
+          quantity: 200,
           status: "APPROVED",
           requestedById: users[2].id,
           approvedById: admin.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.materialRequest.create({
         data: {
           materialId: materials[6].id,
-          quantity: 150, // граммы
+          quantity: 150,
           status: "REJECTED",
           requestedById: users[0].id,
           approvedById: admin.id,
           rejectionReason: "Временная недоступность материала у поставщика",
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.materialRequest.create({
         data: {
           materialId: materials[7].id,
-          quantity: 75, // граммы
+          quantity: 75,
           status: "PENDING",
           requestedById: users[1].id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.materialRequest.create({
         data: {
           materialId: materials[8].id,
-          quantity: 25, // граммы
+          quantity: 25,
           status: "APPROVED",
           requestedById: users[2].id,
           approvedById: admin.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.materialRequest.create({
         data: {
           materialId: materials[9].id,
-          quantity: 400, // граммы
+          quantity: 400,
           status: "REJECTED",
           requestedById: users[0].id,
           approvedById: admin.id,
           rejectionReason: "Некорректное количество для данного типа материала",
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       }),
     ]);
