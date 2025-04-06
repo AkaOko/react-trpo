@@ -2,11 +2,9 @@ import express from "express";
 import cors from "cors";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import multer from "multer";
 import { PrismaClient } from "@prisma/client";
 import { fileURLToPath } from "url";
 import path from "path";
-import fs from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,40 +22,6 @@ try {
 
 app.use(cors());
 app.use(express.json());
-
-const uploadsDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-  console.log("Папка 'uploads' создана по пути:", uploadsDir);
-}
-
-app.use("/uploads", express.static(uploadsDir));
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(
-      null,
-      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
-    );
-  },
-});
-
-const upload = multer({ storage: storage });
-
-async function testDbConnection() {
-  try {
-    await prisma.$connect();
-    console.log("Database connection successful");
-    return true;
-  } catch (error) {
-    console.error("Database connection error:", error);
-    return false;
-  }
-}
 
 // Настройка CORS для Vercel
 const allowedOrigins = [
@@ -304,23 +268,39 @@ export default async function handler(req, res) {
       // Регистрация пользователя
       case path === "/api/register" && req.method === "POST":
         try {
+          console.log("Начало обработки регистрации");
+          console.log("Тип req.body:", typeof req.body);
+          console.log("Содержимое req.body:", req.body);
+
+          // Проверяем и парсим тело запроса
+          if (typeof req.body === "string") {
+            console.log("Парсим строку JSON");
+            req.body = JSON.parse(req.body);
+          }
+
           const { name, email, password, phone, role } = req.body;
-          console.log("Request body:", req.body);
+          console.log("Распарсенные данные:", { name, email, phone, role });
 
           if (!email || !password) {
+            console.log("Отсутствует email или пароль");
             return res
               .status(400)
               .json({ error: "Email и пароль обязательны" });
           }
 
+          console.log("Проверяем существование пользователя");
           const existingUser = await prisma.user.findUnique({
             where: { email },
           });
           if (existingUser) {
+            console.log("Пользователь с таким email уже существует");
             return res.status(400).json({ error: "Email уже используется" });
           }
 
+          console.log("Хешируем пароль");
           const hashedPassword = await bcrypt.hash(password, 10);
+
+          console.log("Создаем пользователя");
           const user = await prisma.user.create({
             data: {
               name,
@@ -328,16 +308,22 @@ export default async function handler(req, res) {
               password: hashedPassword,
               phone,
               role: role || "CLIENT",
+              createdAt: new Date(),
+              updatedAt: new Date(),
             },
           });
+          console.log("Пользователь успешно создан:", user.id);
 
           return res.json({
             message: "Пользователь успешно зарегистрирован",
             userId: user.id,
           });
         } catch (error) {
-          console.error("Registration error:", error);
-          return res.status(500).json({ error: "Ошибка при регистрации" });
+          console.error("Ошибка при регистрации:", error);
+          return res.status(500).json({
+            error: "Ошибка при регистрации",
+            details: error.message,
+          });
         }
 
       // Обновление профиля пользователя
