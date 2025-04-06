@@ -196,6 +196,16 @@ export default async function handler(req, res) {
             hasPassword: !!req.body.password,
           });
 
+          // Проверяем подключение к базе данных
+          const isConnected = await testDbConnection();
+          if (!isConnected) {
+            console.error("Database connection failed during login");
+            return res.status(500).json({
+              error: "Database error",
+              details: "Could not connect to database during login",
+            });
+          }
+
           const { email, password } = req.body;
 
           if (!email || !password) {
@@ -205,6 +215,7 @@ export default async function handler(req, res) {
               .json({ error: "Email и пароль обязательны" });
           }
 
+          console.log("Searching for user with email:", email);
           const user = await prisma.user.findUnique({
             where: { email },
             select: {
@@ -220,12 +231,14 @@ export default async function handler(req, res) {
             return res.status(401).json({ error: "Пользователь не найден" });
           }
 
+          console.log("User found, verifying password");
           const isValidPassword = await bcrypt.compare(password, user.password);
           if (!isValidPassword) {
             console.log("Invalid password for user:", email);
             return res.status(401).json({ error: "Неверный пароль" });
           }
 
+          console.log("Password verified, generating token");
           const token = jwt.sign(
             { userId: user.id, role: user.role },
             process.env.JWT_SECRET || "your-secret-key",
@@ -236,9 +249,15 @@ export default async function handler(req, res) {
           return res.json({
             token,
             role: user.role,
+            userId: user.id,
           });
         } catch (error) {
-          console.error("Login error:", error);
+          console.error("Login error details:", {
+            name: error.name,
+            message: error.message,
+            code: error.code,
+            stack: error.stack,
+          });
           return res.status(500).json({
             error: "Ошибка при входе в систему",
             details: error.message,

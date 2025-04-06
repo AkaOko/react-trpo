@@ -18,7 +18,11 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    console.log("Request config:", config);
+    console.log("Request config:", {
+      method: config.method,
+      url: config.url,
+      headers: config.headers,
+    });
     return config;
   },
   (error) => {
@@ -33,23 +37,26 @@ api.interceptors.response.use(
     console.log("Response received:", {
       status: response.status,
       data: response.data,
+      headers: response.headers,
     });
     return response;
   },
   (error) => {
-    console.error("API Error:", {
+    const errorDetails = {
       error: error.response?.data?.error || "Network error",
       details: error.response?.data?.details || error.message,
       url: error.config?.url,
       status: error.response?.status,
-    });
+      response: error.response?.data,
+    };
+    console.error("API Error:", errorDetails);
 
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
       window.location.href = "/login";
     }
 
-    return Promise.reject(error);
+    return Promise.reject(errorDetails);
   }
 );
 
