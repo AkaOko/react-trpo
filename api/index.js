@@ -44,7 +44,12 @@ async function testDbConnection() {
     console.log("Database connection successful");
     return true;
   } catch (error) {
-    console.error("Database connection error:", error);
+    console.error("Database connection error details:", {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+    });
     return false;
   }
 }
@@ -289,8 +294,25 @@ export default async function handler(req, res) {
       // Регистрация пользователя
       case path === "/api/register" && req.method === "POST":
         try {
-          console.log("Processing registration request");
+          console.log("Starting registration process...");
+
+          // Проверяем подключение к базе данных перед регистрацией
+          const isConnected = await testDbConnection();
+          if (!isConnected) {
+            console.error("Database connection failed during registration");
+            return res.status(500).json({
+              error: "Database error",
+              details: "Could not connect to database during registration",
+            });
+          }
+
           const { name, email, password, phone, role } = req.body;
+          console.log("Registration data received:", {
+            name,
+            email,
+            phone,
+            role,
+          });
 
           if (!email || !password) {
             console.log("Missing required fields");
@@ -300,34 +322,44 @@ export default async function handler(req, res) {
             });
           }
 
-          console.log("Checking for existing user");
+          console.log("Checking for existing user...");
           const existingUser = await prisma.user.findUnique({
             where: { email },
           });
 
           if (existingUser) {
-            console.log("User already exists");
+            console.log("User already exists with email:", email);
             return res.status(400).json({
               error: "User exists",
               details: "Email уже используется",
             });
           }
 
-          console.log("Hashing password");
+          console.log("Hashing password...");
           const hashedPassword = await bcrypt.hash(password, 10);
 
-          console.log("Creating new user");
-          const user = await prisma.user.create({
-            data: {
-              name,
-              email,
-              password: hashedPassword,
-              phone,
-              role: role || "CLIENT",
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            },
-          });
+          console.log("Creating new user...");
+          const user = await prisma.user
+            .create({
+              data: {
+                name: name || email,
+                email,
+                password: hashedPassword,
+                phone: phone || "",
+                role: role || "CLIENT",
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              },
+            })
+            .catch((error) => {
+              console.error("Error creating user:", {
+                name: error.name,
+                message: error.message,
+                code: error.code,
+                stack: error.stack,
+              });
+              throw error;
+            });
 
           console.log("User created successfully:", user.id);
           return res.status(201).json({
@@ -335,7 +367,12 @@ export default async function handler(req, res) {
             userId: user.id,
           });
         } catch (error) {
-          console.error("Registration error:", error);
+          console.error("Registration error details:", {
+            name: error.name,
+            message: error.message,
+            code: error.code,
+            stack: error.stack,
+          });
           return res.status(500).json({
             error: "Registration failed",
             details: error.message,
