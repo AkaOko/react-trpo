@@ -142,13 +142,11 @@ const AdminPage = () => {
       if (newProduct.image) {
         const formData = new FormData();
         formData.append("image", newProduct.image);
-        const response = await adminApi.post("/upload", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        const response = await adminApi.uploadFile(formData);
         imageUrl = response.data.url;
       }
 
-      const response = await adminApi.post("/products", {
+      const response = await adminApi.createProduct({
         ...newProduct,
         image: imageUrl,
       });
@@ -162,7 +160,7 @@ const AdminPage = () => {
           image: null,
         });
         // Обновляем список продуктов
-        const productsRes = await adminApi.get("/products");
+        const productsRes = await adminApi.getProducts();
         setProducts(productsRes.data);
       }
     } catch (error) {
@@ -173,7 +171,7 @@ const AdminPage = () => {
 
   const handleDeleteProduct = async (id) => {
     try {
-      await adminApi.delete(`/products/${id}`);
+      await adminApi.deleteProduct(id);
       setProducts((prev) => prev.filter((product) => product.id !== id));
       if (selectedProduct && selectedProduct.id === id) {
         setSelectedProduct(null);
@@ -208,25 +206,19 @@ const AdminPage = () => {
       if (editProduct.imageFile) {
         const formData = new FormData();
         formData.append("image", editProduct.imageFile);
-        const response = await adminApi.post("/upload", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        const response = await adminApi.uploadFile(formData);
         imageUrl = response.data.url;
       }
 
-      const response = await adminApi.put("/products", {
-        id: editProduct.id,
-        name: editProduct.name,
-        type: editProduct.type,
-        materialName: editProduct.materialName,
-        price: editProduct.price,
+      const response = await adminApi.updateProduct(editProduct.id, {
+        ...editProduct,
         image: imageUrl,
       });
 
       if (response.data) {
         setEditProduct(null);
         // Обновляем список продуктов
-        const productsRes = await adminApi.get("/products");
+        const productsRes = await adminApi.getProducts();
         setProducts(productsRes.data);
         setSelectedProduct(response.data);
       }
@@ -268,7 +260,7 @@ const AdminPage = () => {
 
   const handleUpdateOrder = async () => {
     try {
-      const response = await adminApi.put(`/orders/${editOrder.id}`, {
+      const response = await adminApi.updateOrder(editOrder.id, {
         status: editOrder.status,
         total: editOrder.total,
         products: editOrder.products,
@@ -279,7 +271,7 @@ const AdminPage = () => {
       if (response.data) {
         setEditOrder(null);
         // Обновляем список заказов
-        const ordersRes = await adminApi.get("/orders");
+        const ordersRes = await adminApi.getOrders();
         setOrders(ordersRes.data);
       }
     } catch (error) {
@@ -374,11 +366,11 @@ const AdminPage = () => {
 
   const handleUpdateUser = async () => {
     try {
-      const response = await adminApi.put(`/users/${editUser.id}`, editUser);
+      const response = await adminApi.updateUser(editUser.id, editUser);
       if (response.data) {
         setEditUser(null);
         // Обновляем список пользователей
-        const usersRes = await adminApi.get("/users");
+        const usersRes = await adminApi.getUsers();
         setUsers(usersRes.data);
       }
     } catch (error) {

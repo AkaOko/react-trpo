@@ -27,14 +27,9 @@ const MaterialRequestsManagement = () => {
 
   const fetchData = async () => {
     try {
-      const token = localStorage.getItem("token");
       const [requestsRes, materialsRes] = await Promise.all([
-        axios.get("/api/material-requests", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        axios.get("/api/materials", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
+        adminApi.getMaterialRequests(),
+        adminApi.getMaterials(),
       ]);
       setRequests(requestsRes.data);
       setMaterials(materialsRes.data);
@@ -49,10 +44,7 @@ const MaterialRequestsManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem("token");
-      await axios.post("/api/material-requests", newRequest, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await adminApi.createMaterialRequest(newRequest);
       setNewRequest({ materialId: "", quantity: "" });
       fetchData();
     } catch (error) {
@@ -63,17 +55,9 @@ const MaterialRequestsManagement = () => {
 
   const handleStatusChange = async (requestId, newStatus) => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.put(
-        `/api/material-requests/${requestId}`,
-        {
-          status: newStatus,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      // Обновляем локальное состояние сразу после успешного ответа
+      const response = await adminApi.updateMaterialRequest(requestId, {
+        status: newStatus,
+      });
       setRequests(
         requests.map((request) =>
           request.id === requestId ? response.data : request
@@ -87,17 +71,8 @@ const MaterialRequestsManagement = () => {
 
   const handleEditRequest = async (requestId) => {
     try {
-      const token = localStorage.getItem("token");
       const { materialId, quantity } = editRequest;
-
-      await axios.put(
-        `/api/material-requests/${requestId}`,
-        { materialId, quantity },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
+      await adminApi.updateMaterialRequest(requestId, { materialId, quantity });
       setEditRequest(null);
       fetchData();
     } catch (error) {
