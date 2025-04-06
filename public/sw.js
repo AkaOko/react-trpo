@@ -14,6 +14,34 @@ self.addEventListener("fetch", (event) => {
 
   // Пропускаем запросы к API
   if (url.pathname.startsWith("/api/")) {
+    // Для загрузки файлов используем прямую передачу без кэширования
+    if (url.pathname === "/api/upload") {
+      event.respondWith(
+        fetch(event.request)
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response;
+          })
+          .catch((error) => {
+            console.error("File upload error:", error);
+            return new Response(
+              JSON.stringify({
+                error: "Upload error",
+                details: error.message,
+                url: event.request.url,
+              }),
+              {
+                status: 500,
+                headers: { "Content-Type": "application/json" },
+              }
+            );
+          })
+      );
+      return;
+    }
+
     event.respondWith(
       fetchWithRetry(event.request, 3)
         .then((response) => {
@@ -99,7 +127,20 @@ self.addEventListener("fetch", (event) => {
 // Добавляем функцию для повторных попыток
 async function fetchWithRetry(request, retries) {
   try {
-    const response = await fetch(request);
+    // Создаем новый объект Request для каждой попытки
+    const newRequest = new Request(request.url, {
+      method: request.method,
+      headers: request.headers,
+      body: request.body,
+      mode: request.mode,
+      credentials: request.credentials,
+      cache: request.cache,
+      redirect: request.redirect,
+      referrer: request.referrer,
+      integrity: request.integrity,
+    });
+
+    const response = await fetch(newRequest);
     if (!response.ok && retries > 0) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
