@@ -74,9 +74,14 @@ const verifyToken = (req) => {
     if (!token) {
       throw new Error("No token provided");
     }
-    return jwt.verify(token, "your-secret-key");
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "your-secret-key"
+    );
+    console.log("Token verified successfully:", decoded);
+    return decoded;
   } catch (error) {
-    logError(error, "Token verification");
+    console.error("Token verification failed:", error);
     throw error;
   }
 };
@@ -142,7 +147,6 @@ export default async function handler(req, res) {
     console.log("Request received:", {
       method: req.method,
       path: req.url,
-      body: req.body,
       headers: req.headers,
     });
 
@@ -165,7 +169,12 @@ export default async function handler(req, res) {
 
     // Парсим JSON
     if (req.body && typeof req.body === "string") {
-      req.body = JSON.parse(req.body);
+      try {
+        req.body = JSON.parse(req.body);
+      } catch (error) {
+        console.error("JSON parsing error:", error);
+        return res.status(400).json({ error: "Invalid JSON" });
+      }
     }
 
     // Обрабатываем OPTIONS запрос
@@ -182,9 +191,15 @@ export default async function handler(req, res) {
       // Аутентификация
       case path === "/api/login" && req.method === "POST":
         try {
+          console.log("Login attempt with data:", {
+            email: req.body.email,
+            hasPassword: !!req.body.password,
+          });
+
           const { email, password } = req.body;
 
           if (!email || !password) {
+            console.log("Missing credentials");
             return res
               .status(400)
               .json({ error: "Email и пароль обязательны" });
@@ -201,27 +216,33 @@ export default async function handler(req, res) {
           });
 
           if (!user) {
+            console.log("User not found:", email);
             return res.status(401).json({ error: "Пользователь не найден" });
           }
 
           const isValidPassword = await bcrypt.compare(password, user.password);
           if (!isValidPassword) {
+            console.log("Invalid password for user:", email);
             return res.status(401).json({ error: "Неверный пароль" });
           }
 
           const token = jwt.sign(
             { userId: user.id, role: user.role },
-            "your-secret-key",
+            process.env.JWT_SECRET || "your-secret-key",
             { expiresIn: "1h" }
           );
 
+          console.log("Login successful for user:", email);
           return res.json({
             token,
             role: user.role,
           });
         } catch (error) {
           console.error("Login error:", error);
-          return res.status(500).json({ error: "Ошибка при входе в систему" });
+          return res.status(500).json({
+            error: "Ошибка при входе в систему",
+            details: error.message,
+          });
         }
 
       // Профиль пользователя
@@ -269,19 +290,7 @@ export default async function handler(req, res) {
               },
             },
           });
-
-          // Добавляем вычисляемые поля
-          const usersWithStats = users.map((user) => ({
-            ...user,
-            totalOrdersAmount: user.orders.reduce(
-              (sum, order) =>
-                sum + (order.status === "Доставлен" ? order.total : 0),
-              0
-            ),
-            ordersCount: user.orders.length,
-          }));
-
-          return res.json(usersWithStats);
+          return res.json(users);
         } catch (error) {
           console.error("Users error:", error);
           return res.status(500).json({
