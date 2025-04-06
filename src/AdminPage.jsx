@@ -81,11 +81,11 @@ const AdminPage = () => {
           ordersRes,
           usersRes,
         ] = await Promise.all([
-          adminApi.get("/products"),
-          adminApi.get("/materials"),
-          adminApi.get("/product-types"),
-          adminApi.get("/orders"),
-          adminApi.get("/users"),
+          adminApi.getProducts(),
+          adminApi.getMaterials(),
+          adminApi.getProductTypes(),
+          adminApi.getOrders(),
+          adminApi.getUsers(),
         ]);
 
         setProducts(productsRes.data);
