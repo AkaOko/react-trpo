@@ -572,44 +572,41 @@ export default async function handler(req, res) {
         }
 
       // Обновление продукта
-      case path.startsWith("/api/products/") && req.method === "PUT":
+      case path === "/api/products" && req.method === "PUT":
         try {
-          const user = verifyToken(req);
-          if (user.role !== "ADMIN") {
-            return res.status(403).json({ error: "Доступ запрещен" });
-          }
+          const { id, name, type, materialName, price, image } = req.body;
 
-          const id = path.split("/").pop();
-          const { name, type, materialName, price, image } = req.body;
-
-          let material = await prisma.material.findFirst({
+          // Находим материал по имени
+          const material = await prisma.material.findFirst({
             where: { name: materialName },
           });
 
           if (!material) {
-            material = await prisma.material.create({
-              data: { name: materialName },
-            });
+            return res.status(400).json({ error: "Материал не найден" });
           }
 
+          // Обновляем продукт
           const updatedProduct = await prisma.product.update({
             where: { id },
             data: {
               name,
               type,
-              price: parseFloat(price),
-              image,
               materialId: material.id,
+              price: parseInt(price),
+              image,
             },
-            include: { material: true },
+            include: {
+              material: true,
+            },
           });
 
           return res.json(updatedProduct);
         } catch (error) {
-          console.error("Product update error:", error);
-          return res
-            .status(500)
-            .json({ error: "Ошибка при обновлении продукта" });
+          console.error("Ошибка при обновлении продукта:", error);
+          return res.status(500).json({
+            error: "Ошибка при обновлении продукта",
+            details: error.message,
+          });
         }
 
       // Удаление продукта

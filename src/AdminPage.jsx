@@ -214,8 +214,12 @@ const AdminPage = () => {
         imageUrl = response.data.url;
       }
 
-      const response = await api.put(`/products/${editProduct.id}`, {
-        ...editProduct,
+      const response = await api.put("/products", {
+        id: editProduct.id,
+        name: editProduct.name,
+        type: editProduct.type,
+        materialName: editProduct.materialName,
+        price: editProduct.price,
         image: imageUrl,
       });
 
@@ -224,6 +228,7 @@ const AdminPage = () => {
         // Обновляем список продуктов
         const productsRes = await api.get("/products");
         setProducts(productsRes.data);
+        setSelectedProduct(response.data);
       }
     } catch (error) {
       console.error("Ошибка при обновлении продукта:", error);
