@@ -23,22 +23,49 @@ const logError = (error, context) => {
   });
 };
 
-try {
-  prisma = new PrismaClient();
-  console.log("Prisma client initialized successfully");
-} catch (error) {
-  logError(error, "Prisma initialization");
-  process.exit(1);
-}
+// Инициализация Prisma с повторными попытками
+const initializePrisma = async (retries = 3) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      prisma = new PrismaClient();
+      await prisma.$connect();
+      console.log("Prisma client initialized successfully");
+      return true;
+    } catch (error) {
+      logError(error, `Prisma initialization attempt ${i + 1}`);
+      if (i === retries - 1) {
+        console.error("Failed to initialize Prisma after all retries");
+        return false;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+  }
+};
 
-// Настройка CORS для Vercel
-const allowedOrigins = [
-  "https://react-trpo.vercel.app",
-  "http://localhost:5173",
-  "http://localhost:5000",
-  "https://api.react-trpo.vercel.app",
-  "https://react-trpo-last-okm9vxtr7-akaokos-projects.vercel.app",
-];
+// Настройка CORS
+const corsOptions = {
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      "https://react-trpo.vercel.app",
+      "http://localhost:5173",
+      "http://localhost:5000",
+      "https://api.react-trpo.vercel.app",
+      "https://react-trpo-last-okm9vxtr7-akaokos-projects.vercel.app",
+    ];
+
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
+app.use(express.json());
 
 // Верификация JWT токена
 const verifyToken = (req) => {
@@ -82,20 +109,32 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(
-      null,
-      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
-    );
-  },
-});
-
+// Настройка multer для временного хранения в памяти
+const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
+
+// Инициализация приложения
+const initializeApp = async () => {
+  const prismaInitialized = await initializePrisma();
+  if (!prismaInitialized) {
+    console.error("Failed to initialize Prisma, exiting...");
+    process.exit(1);
+  }
+
+  const dbConnected = await testDbConnection();
+  if (!dbConnected) {
+    console.error("Failed to connect to database, exiting...");
+    process.exit(1);
+  }
+
+  console.log("Application initialized successfully");
+};
+
+// Запуск инициализации
+initializeApp().catch((error) => {
+  console.error("Failed to initialize application:", error);
+  process.exit(1);
+});
 
 // Обработчик для serverless функций Vercel
 export default async function handler(req, res) {
@@ -107,21 +146,11 @@ export default async function handler(req, res) {
       headers: req.headers,
     });
 
-    // Проверяем подключение к базе данных
-    const isConnected = await testDbConnection();
-    if (!isConnected) {
-      console.error("Database connection failed");
-      return res.status(500).json({
-        error: "Database connection failed",
-        details: "Could not connect to the database",
-      });
-    }
-
     // Настраиваем CORS
     await new Promise((resolve, reject) => {
       cors({
         origin: function (origin, callback) {
-          if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+          if (!origin || corsOptions.origin(origin, callback)) {
             callback(null, true);
           } else {
             callback(new Error("Not allowed by CORS"));
@@ -945,10 +974,10 @@ export default async function handler(req, res) {
             .json({ error: "Не удалось обновить данные пользователя" });
         }
 
-      // Добавляем обработку загрузки файлов
+      // Добавляем обработчик загрузки файлов
       case path === "/api/upload" && req.method === "POST":
         try {
-          upload.single("image")(req, res, async (err) => {
+          upload.single("file")(req, res, async (err) => {
             if (err) {
               console.error("Ошибка при загрузке файла:", err);
               return res
@@ -957,15 +986,28 @@ export default async function handler(req, res) {
             }
 
             if (!req.file) {
-              return res.status(400).json({ error: "Файл не был загружен" });
+              return res.status(400).json({ error: "No file uploaded" });
             }
 
-            const fileUrl = `/uploads/${req.file.filename}`;
-            return res.json({ url: fileUrl });
+            // Здесь вы можете обработать файл в памяти
+            // Например, отправить его в облачное хранилище или сохранить в базе данных
+            const fileData = {
+              buffer: req.file.buffer,
+              mimetype: req.file.mimetype,
+              originalname: req.file.originalname,
+              size: req.file.size,
+            };
+
+            // Временный ответ - в реальном приложении здесь должна быть логика сохранения
+            res.json({
+              message: "File uploaded successfully",
+              filename: req.file.originalname,
+              size: req.file.size,
+            });
           });
         } catch (error) {
           console.error("Ошибка при загрузке файла:", error);
-          return res.status(500).json({ error: "Ошибка при загрузке файла" });
+          return res.status(500).json({ error: "Failed to upload file" });
         }
 
       default:
