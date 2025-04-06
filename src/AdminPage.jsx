@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import api from "./config/api";
 import { jwtDecode } from "jwt-decode";
 import Navbar from "./components/Navbar";
 import MaterialRequestsManagement from "./components/MaterialRequestsManagement";
+import adminApi from "./config/api";
 import {
   TableContainer,
   Table,
@@ -81,11 +81,11 @@ const AdminPage = () => {
           ordersRes,
           usersRes,
         ] = await Promise.all([
-          api.get("/products"),
-          api.get("/materials"),
-          api.get("/product-types"),
-          api.get("/orders"),
-          api.get("/users"),
+          adminApi.get("/products"),
+          adminApi.get("/materials"),
+          adminApi.get("/product-types"),
+          adminApi.get("/orders"),
+          adminApi.get("/users"),
         ]);
 
         setProducts(productsRes.data);
@@ -142,13 +142,13 @@ const AdminPage = () => {
       if (newProduct.image) {
         const formData = new FormData();
         formData.append("image", newProduct.image);
-        const response = await api.post("/upload", formData, {
+        const response = await adminApi.post("/upload", formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
         imageUrl = response.data.url;
       }
 
-      const response = await api.post("/products", {
+      const response = await adminApi.post("/products", {
         ...newProduct,
         image: imageUrl,
       });
@@ -162,7 +162,7 @@ const AdminPage = () => {
           image: null,
         });
         // Обновляем список продуктов
-        const productsRes = await api.get("/products");
+        const productsRes = await adminApi.get("/products");
         setProducts(productsRes.data);
       }
     } catch (error) {
@@ -173,7 +173,7 @@ const AdminPage = () => {
 
   const handleDeleteProduct = async (id) => {
     try {
-      await api.delete(`/products/${id}`);
+      await adminApi.delete(`/products/${id}`);
       setProducts((prev) => prev.filter((product) => product.id !== id));
       if (selectedProduct && selectedProduct.id === id) {
         setSelectedProduct(null);
@@ -208,13 +208,13 @@ const AdminPage = () => {
       if (editProduct.imageFile) {
         const formData = new FormData();
         formData.append("image", editProduct.imageFile);
-        const response = await api.post("/upload", formData, {
+        const response = await adminApi.post("/upload", formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
         imageUrl = response.data.url;
       }
 
-      const response = await api.put("/products", {
+      const response = await adminApi.put("/products", {
         id: editProduct.id,
         name: editProduct.name,
         type: editProduct.type,
@@ -226,7 +226,7 @@ const AdminPage = () => {
       if (response.data) {
         setEditProduct(null);
         // Обновляем список продуктов
-        const productsRes = await api.get("/products");
+        const productsRes = await adminApi.get("/products");
         setProducts(productsRes.data);
         setSelectedProduct(response.data);
       }
@@ -268,7 +268,7 @@ const AdminPage = () => {
 
   const handleUpdateOrder = async () => {
     try {
-      const response = await api.put(`/orders/${editOrder.id}`, {
+      const response = await adminApi.put(`/orders/${editOrder.id}`, {
         status: editOrder.status,
         total: editOrder.total,
         products: editOrder.products,
@@ -279,7 +279,7 @@ const AdminPage = () => {
       if (response.data) {
         setEditOrder(null);
         // Обновляем список заказов
-        const ordersRes = await api.get("/orders");
+        const ordersRes = await adminApi.get("/orders");
         setOrders(ordersRes.data);
       }
     } catch (error) {
@@ -374,11 +374,11 @@ const AdminPage = () => {
 
   const handleUpdateUser = async () => {
     try {
-      const response = await api.put(`/users/${editUser.id}`, editUser);
+      const response = await adminApi.put(`/users/${editUser.id}`, editUser);
       if (response.data) {
         setEditUser(null);
         // Обновляем список пользователей
-        const usersRes = await api.get("/users");
+        const usersRes = await adminApi.get("/users");
         setUsers(usersRes.data);
       }
     } catch (error) {
