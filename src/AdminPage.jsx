@@ -929,7 +929,11 @@ const AdminPage = () => {
                   </p>
                   <p>
                     <strong>Дата создания:</strong>{" "}
-                    {new Date(selectedOrder.createdAt).toLocaleString("ru-RU")}
+                    {selectedOrder.createdAt
+                      ? new Date(selectedOrder.createdAt).toLocaleString(
+                          "ru-RU"
+                        )
+                      : "Дата не указана"}
                   </p>
                   <div className="flex justify-end gap-2 mt-4">
                     <button
