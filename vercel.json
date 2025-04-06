@@ -14,23 +14,23 @@
       }
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/index.js"
+      "source": "/api/:path*",
+      "destination": "/api/index.js"
     },
     {
-      "src": "/(.*)",
-      "dest": "/dist/$1"
+      "source": "/(.*)",
+      "destination": "/dist/$1"
     }
   ],
   "headers": [
     {
-      "source": "/api/(.*)",
+      "source": "/api/:path*",
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "https://react-trpo-1xbig9kki-akaokos-projects.vercel.app"
+          "value": "https://react-trpo.vercel.app"
         },
         {
           "key": "Access-Control-Allow-Methods",
@@ -48,8 +48,8 @@
     }
   ],
   "env": {
-    "DATABASE_URL": "@database_url",
-    "JWT_SECRET": "@jwt_secret",
-    "CORS_ORIGIN": "https://react-trpo-1xbig9kki-akaokos-projects.vercel.app"
+    "DATABASE_URL": "postgresql://postgres:MQRQEwMGXZejgslNSnkwYvvjctTzQghP@gondola.proxy.rlwy.net:19520/railway",
+    "JWT_SECRET": "your-secret-key",
+    "CORS_ORIGIN": "https://react-trpo.vercel.app"
   }
 }
