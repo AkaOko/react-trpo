@@ -207,12 +207,34 @@ export default async function handler(req, res) {
               email: true,
               phone: true,
               role: true,
-              totalOrdersAmount: true,
+              orders: {
+                select: {
+                  id: true,
+                  total: true,
+                  status: true,
+                },
+              },
             },
           });
-          return res.json(users);
+
+          // Добавляем вычисляемые поля
+          const usersWithStats = users.map((user) => ({
+            ...user,
+            totalOrdersAmount: user.orders.reduce(
+              (sum, order) =>
+                sum + (order.status === "Доставлен" ? order.total : 0),
+              0
+            ),
+            ordersCount: user.orders.length,
+          }));
+
+          return res.json(usersWithStats);
         } catch (error) {
-          return res.status(401).json({ error: "Unauthorized" });
+          console.error("Users error:", error);
+          return res.status(500).json({
+            error: "Ошибка при получении пользователей",
+            details: error.message,
+          });
         }
 
       // Получение списка материалов
@@ -226,9 +248,10 @@ export default async function handler(req, res) {
           return res.json(materials);
         } catch (error) {
           console.error("Materials error:", error);
-          return res
-            .status(500)
-            .json({ error: "Ошибка при получении материалов" });
+          return res.status(500).json({
+            error: "Ошибка при получении материалов",
+            details: error.message,
+          });
         }
 
       // Получение списка типов продуктов
@@ -249,9 +272,10 @@ export default async function handler(req, res) {
           return res.json(productTypes);
         } catch (error) {
           console.error("Product types error:", error);
-          return res
-            .status(500)
-            .json({ error: "Ошибка при получении типов продуктов" });
+          return res.status(500).json({
+            error: "Ошибка при получении типов продуктов",
+            details: error.message,
+          });
         }
 
       // Получение списка продуктов
@@ -265,9 +289,10 @@ export default async function handler(req, res) {
           return res.json(products);
         } catch (error) {
           console.error("Products error:", error);
-          return res
-            .status(500)
-            .json({ error: "Ошибка при получении продуктов" });
+          return res.status(500).json({
+            error: "Ошибка при получении продуктов",
+            details: error.message,
+          });
         }
 
       // Получение списка заказов
@@ -288,9 +313,10 @@ export default async function handler(req, res) {
           return res.json(orders);
         } catch (error) {
           console.error("Orders error:", error);
-          return res
-            .status(500)
-            .json({ error: "Ошибка при получении заказов" });
+          return res.status(500).json({
+            error: "Ошибка при получении заказов",
+            details: error.message,
+          });
         }
 
       // Получение списка заявок на материалы
@@ -307,7 +333,10 @@ export default async function handler(req, res) {
           return res.json(requests);
         } catch (error) {
           console.error("Material requests error:", error);
-          return res.status(500).json({ error: "Ошибка при получении заявок" });
+          return res.status(500).json({
+            error: "Ошибка при получении заявок",
+            details: error.message,
+          });
         }
 
       // Регистрация пользователя

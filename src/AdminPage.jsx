@@ -3,6 +3,15 @@ import api from "./config/api";
 import { jwtDecode } from "jwt-decode";
 import Navbar from "./components/Navbar";
 import MaterialRequestsManagement from "./components/MaterialRequestsManagement";
+import {
+  TableContainer,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  Paper,
+} from "@mui/material";
 
 const AdminPage = () => {
   const [products, setProducts] = useState([]);
@@ -117,40 +126,45 @@ const AdminPage = () => {
     setNewProduct((prev) => ({ ...prev, image: file }));
   };
 
-  const handleImageUpload = async (file) => {
-    try {
-      const formData = new FormData();
-      formData.append("image", file);
-      const response = await api.post("/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      return response.data.url;
-    } catch (error) {
-      console.error("Ошибка при загрузке изображения:", error);
-      throw error;
+  const handleEditImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) {
+      console.error("Файл не выбран.");
+      return;
     }
+    setEditProduct((prev) => ({ ...prev, imageFile: file }));
   };
 
-  const handleCreateProduct = async () => {
+  const handleCreateProduct = async (e) => {
+    e.preventDefault();
     try {
       let imageUrl = null;
       if (newProduct.image) {
-        imageUrl = await handleImageUpload(newProduct.image);
+        const formData = new FormData();
+        formData.append("image", newProduct.image);
+        const response = await api.post("/upload", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        imageUrl = response.data.url;
       }
 
-      await api.post("/products", {
+      const response = await api.post("/products", {
         ...newProduct,
         image: imageUrl,
       });
 
-      setNewProduct({
-        name: "",
-        type: "",
-        materialName: "",
-        price: "",
-        image: null,
-      });
-      fetchData();
+      if (response.data) {
+        setNewProduct({
+          name: "",
+          type: "",
+          materialName: "",
+          price: "",
+          image: null,
+        });
+        // Обновляем список продуктов
+        const productsRes = await api.get("/products");
+        setProducts(productsRes.data);
+      }
     } catch (error) {
       console.error("Ошибка при создании продукта:", error);
       setError("Не удалось добавить товар. Проверьте данные и сервер.");
@@ -188,15 +202,16 @@ const AdminPage = () => {
     setEditProduct((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleEditImageChange = (e) => {
-    setEditProduct((prev) => ({ ...prev, imageFile: e.target.files[0] }));
-  };
-
   const handleUpdateProduct = async () => {
     try {
       let imageUrl = editProduct.image;
-      if (typeof editProduct.image !== "string" && editProduct.image) {
-        imageUrl = await handleImageUpload(editProduct.image);
+      if (editProduct.imageFile) {
+        const formData = new FormData();
+        formData.append("image", editProduct.imageFile);
+        const response = await api.post("/upload", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        imageUrl = response.data.url;
       }
 
       const response = await api.put(`/products/${editProduct.id}`, {
@@ -939,79 +954,37 @@ const AdminPage = () => {
           ) : error ? (
             <p className="text-center text-red-500">{error}</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full bg-white border border-gray-300 rounded-lg shadow-md">
-                <thead>
-                  <tr className="bg-gray-100 border-b border-gray-300">
-                    <th className="p-3 text-left text-gray-700 font-semibold">
-                      Имя
-                    </th>
-                    <th className="p-3 text-left text-gray-700 font-semibold">
-                      Email
-                    </th>
-                    <th className="p-3 text-left text-gray-700 font-semibold">
-                      Телефон
-                    </th>
-                    <th className="p-3 text-left text-gray-700 font-semibold">
-                      Роль
-                    </th>
-                    <th className="p-3 text-left text-gray-700 font-semibold">
-                      Количество заказов
-                    </th>
-                    <th className="p-3 text-left text-gray-700 font-semibold">
-                      Общая сумма заказов
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Имя</TableCell>
+                    <TableCell>Email</TableCell>
+                    <TableCell>Телефон</TableCell>
+                    <TableCell>Роль</TableCell>
+                    <TableCell>Количество заказов</TableCell>
+                    <TableCell>Общая сумма заказов</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {users.map((user) => (
-                    <tr
-                      key={user.id}
-                      className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer"
-                      onClick={() => handleOpenUserModal(user)}
-                    >
-                      <td className="p-3">{user.name}</td>
-                      <td className="p-3">{user.email}</td>
-                      <td className="p-3">{user.phone || "Не указан"}</td>
-                      <td className="p-3">
-                        <span
-                          className={`px-2 py-1 rounded text-sm ${
-                            user.role === "ADMIN"
-                              ? "bg-red-100 text-red-800"
-                              : user.role === "WORKER"
-                              ? "bg-blue-100 text-blue-800"
-                              : user.role === "SUPPLIER"
-                              ? "bg-green-100 text-green-800"
-                              : user.role === "DIRECTOR"
-                              ? "bg-purple-100 text-purple-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {user.role === "CLIENT"
-                            ? "Клиент"
-                            : user.role === "ADMIN"
-                            ? "Администратор"
-                            : user.role === "WORKER"
-                            ? "Работник"
-                            : user.role === "SUPPLIER"
-                            ? "Поставщик"
-                            : user.role === "DIRECTOR"
-                            ? "Директор"
-                            : user.role}
-                        </span>
-                      </td>
-                      <td className="p-3">{user.orders?.length || 0}</td>
-                      <td className="p-3">
-                        {user.orders
-                          ?.reduce((sum, order) => sum + order.total, 0)
-                          .toFixed(2)}{" "}
-                        ₽
-                      </td>
-                    </tr>
+                    <TableRow key={user.id}>
+                      <TableCell>{user.name}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{user.phone}</TableCell>
+                      <TableCell>{user.role}</TableCell>
+                      <TableCell>{user.ordersCount}</TableCell>
+                      <TableCell>
+                        {user.totalOrdersAmount.toLocaleString("ru-RU", {
+                          style: "currency",
+                          currency: "RUB",
+                        })}
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </TableBody>
+              </Table>
+            </TableContainer>
           )}
         </div>
 

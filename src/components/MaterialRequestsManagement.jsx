@@ -14,6 +14,11 @@ const MaterialRequestsManagement = () => {
   const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      const decoded = jwtDecode(token);
+      setUserRole(decoded.role);
+    }
     fetchData();
   }, []);
 
@@ -56,7 +61,7 @@ const MaterialRequestsManagement = () => {
   const handleStatusChange = async (requestId, newStatus) => {
     try {
       const token = localStorage.getItem("token");
-      await axios.put(
+      const response = await axios.put(
         `/api/material-requests/${requestId}`,
         {
           status: newStatus,
@@ -65,7 +70,12 @@ const MaterialRequestsManagement = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      fetchData();
+      // Обновляем локальное состояние сразу после успешного ответа
+      setRequests(
+        requests.map((request) =>
+          request.id === requestId ? response.data : request
+        )
+      );
     } catch (error) {
       console.error("Ошибка при обновлении статуса:", error);
       setError("Не удалось обновить статус");
@@ -107,42 +117,45 @@ const MaterialRequestsManagement = () => {
         Управление заявками на материалы
       </h2>
 
-      <form onSubmit={handleSubmit} className="mb-6">
-        <div className="grid grid-cols-2 gap-4">
-          <select
-            value={newRequest.materialId}
-            onChange={(e) =>
-              setNewRequest({ ...newRequest, materialId: e.target.value })
-            }
-            className="p-2 border rounded"
-            required
+      {/* Форма создания заявки только для работников */}
+      {userRole === "WORKER" && (
+        <form onSubmit={handleSubmit} className="mb-6">
+          <div className="grid grid-cols-2 gap-4">
+            <select
+              value={newRequest.materialId}
+              onChange={(e) =>
+                setNewRequest({ ...newRequest, materialId: e.target.value })
+              }
+              className="p-2 border rounded"
+              required
+            >
+              <option value="">Выберите материал</option>
+              {materials.map((material) => (
+                <option key={material.id} value={material.id}>
+                  {material.name}
+                </option>
+              ))}
+            </select>
+            <input
+              type="number"
+              value={newRequest.quantity}
+              onChange={(e) =>
+                setNewRequest({ ...newRequest, quantity: e.target.value })
+              }
+              placeholder="Количество"
+              className="p-2 border rounded"
+              required
+              min="1"
+            />
+          </div>
+          <button
+            type="submit"
+            className="mt-4 bg-emerald-500 text-white px-4 py-2 rounded hover:bg-emerald-600"
           >
-            <option value="">Выберите материал</option>
-            {materials.map((material) => (
-              <option key={material.id} value={material.id}>
-                {material.name}
-              </option>
-            ))}
-          </select>
-          <input
-            type="number"
-            value={newRequest.quantity}
-            onChange={(e) =>
-              setNewRequest({ ...newRequest, quantity: e.target.value })
-            }
-            placeholder="Количество"
-            className="p-2 border rounded"
-            required
-            min="1"
-          />
-        </div>
-        <button
-          type="submit"
-          className="mt-4 bg-emerald-500 text-white px-4 py-2 rounded hover:bg-emerald-600"
-        >
-          Создать заявку
-        </button>
-      </form>
+            Создать заявку
+          </button>
+        </form>
+      )}
 
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white">
@@ -152,7 +165,9 @@ const MaterialRequestsManagement = () => {
               <th className="py-2 px-4 text-left">Материал</th>
               <th className="py-2 px-4 text-left">Количество</th>
               <th className="py-2 px-4 text-left">Статус</th>
-              <th className="py-2 px-4 text-left">Действия</th>
+              {userRole === "ADMIN" && (
+                <th className="py-2 px-4 text-left">Действия</th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -162,19 +177,21 @@ const MaterialRequestsManagement = () => {
                 <td className="py-2 px-4">{request.material.name}</td>
                 <td className="py-2 px-4">{request.quantity}</td>
                 <td className="py-2 px-4">{request.status}</td>
-                <td className="py-2 px-4">
-                  <select
-                    value={request.status}
-                    onChange={(e) =>
-                      handleStatusChange(request.id, e.target.value)
-                    }
-                    className="p-1 border rounded"
-                  >
-                    <option value="PENDING">Ожидает</option>
-                    <option value="APPROVED">Одобрено</option>
-                    <option value="REJECTED">Отклонено</option>
-                  </select>
-                </td>
+                {userRole === "ADMIN" && (
+                  <td className="py-2 px-4">
+                    <select
+                      value={request.status}
+                      onChange={(e) =>
+                        handleStatusChange(request.id, e.target.value)
+                      }
+                      className="p-1 border rounded"
+                    >
+                      <option value="PENDING">Ожидает</option>
+                      <option value="APPROVED">Одобрено</option>
+                      <option value="REJECTED">Отклонено</option>
+                    </select>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

@@ -544,7 +544,7 @@ app.post("/upload", upload.single("image"), (req, res) => {
         .status(400)
         .json({ error: "Файл изображения не предоставлен." });
     }
-    const fileUrl = `http://localhost:5000/uploads/${req.file.filename}`;
+    const fileUrl = `/uploads/${req.file.filename}`;
     res.json({ url: fileUrl });
   } catch (error) {
     console.error("Ошибка при загрузке файла:", error.message);
@@ -730,11 +730,23 @@ app.get("/users", authenticateToken, async (req, res) => {
           select: {
             id: true,
             total: true,
+            status: true,
           },
         },
       },
     });
-    res.json(users);
+
+    // Добавляем вычисляемые поля
+    const usersWithStats = users.map((user) => ({
+      ...user,
+      totalOrdersAmount: user.orders.reduce(
+        (sum, order) => sum + (order.status === "Доставлен" ? order.total : 0),
+        0
+      ),
+      ordersCount: user.orders.length,
+    }));
+
+    res.json(usersWithStats);
   } catch (error) {
     console.error("Ошибка при получении списка пользователей:", error);
     res
