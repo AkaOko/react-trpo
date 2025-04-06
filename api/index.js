@@ -57,7 +57,7 @@ const testDbConnection = async () => {
 const corsOptions = {
   origin: function (origin, callback) {
     const allowedOrigins = [
-      "https://react-trpo-1xbig9kki-akaokos-projects.vercel.app",
+      "https://react-trpo.vercel.app",
       "http://localhost:5173",
       "http://localhost:5000",
     ];
@@ -99,6 +99,12 @@ const verifyToken = (req) => {
 // Глобальный обработчик ошибок
 app.use((err, req, res, next) => {
   logError(err, "Global error handler");
+  console.error("Request details:", {
+    method: req.method,
+    url: req.url,
+    headers: req.headers,
+    body: req.body,
+  });
   res.status(500).json({
     error: "Internal server error",
     message: err.message,
