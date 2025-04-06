@@ -26,6 +26,7 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5000",
   "https://api.react-trpo.vercel.app",
+  "https://react-trpo-last-okm9vxtr7-akaokos-projects.vercel.app",
 ];
 
 // Верификация JWT токена
@@ -44,12 +45,7 @@ async function testDbConnection() {
     console.log("Database connection successful");
     return true;
   } catch (error) {
-    console.error("Database connection error details:", {
-      name: error.name,
-      message: error.message,
-      stack: error.stack,
-      code: error.code,
-    });
+    console.error("Database connection error:", error);
     return false;
   }
 }
@@ -306,12 +302,11 @@ export default async function handler(req, res) {
             });
           }
 
-          const { name, email, password, phone, role } = req.body;
+          const { name, email, password, phone } = req.body;
           console.log("Registration data received:", {
             name,
             email,
             phone,
-            role,
           });
 
           if (!email || !password) {
@@ -339,27 +334,17 @@ export default async function handler(req, res) {
           const hashedPassword = await bcrypt.hash(password, 10);
 
           console.log("Creating new user...");
-          const user = await prisma.user
-            .create({
-              data: {
-                name: name || email,
-                email,
-                password: hashedPassword,
-                phone: phone || "",
-                role: role || "CLIENT",
-                createdAt: new Date(),
-                updatedAt: new Date(),
-              },
-            })
-            .catch((error) => {
-              console.error("Error creating user:", {
-                name: error.name,
-                message: error.message,
-                code: error.code,
-                stack: error.stack,
-              });
-              throw error;
-            });
+          const user = await prisma.user.create({
+            data: {
+              name: name || email,
+              email,
+              password: hashedPassword,
+              phone: phone || "",
+              role: "CLIENT",
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          });
 
           console.log("User created successfully:", user.id);
           return res.status(201).json({

@@ -61,6 +61,8 @@ model User {
   orders   Order[]
   materialRequests MaterialRequest[]
   totalOrdersAmount Float @default(0.0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum Role {
