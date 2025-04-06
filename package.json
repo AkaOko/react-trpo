@@ -13,7 +13,7 @@
     "prisma:migrate": "prisma migrate deploy",
     "prisma:seed": "node prisma/seed.js",
     "prisma:init": "node prisma/init-db.js",
-    "postinstall": "prisma generate && prisma migrate deploy && node prisma/init-db.js"
+    "vercel-build": "prisma generate && prisma migrate deploy"
   },
   "dependencies": {
     "@prisma/client": "^5.10.0",

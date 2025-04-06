@@ -32,9 +32,9 @@
     }
   ],
   "env": {
-    "DATABASE_URL": "@database_url",
-    "JWT_SECRET": "@jwt_secret",
-    "CORS_ORIGIN": "@cors_origin"
+    "DATABASE_URL": "postgresql://postgres:MQRQEwMGXZejgslNSnkwYvvjctTzQghP@gondola.proxy.rlwy.net:19520/railway",
+    "JWT_SECRET": "your-secret-key",
+    "CORS_ORIGIN": "https://react-trpo.vercel.app"
   },
   "rewrites": [
     {
