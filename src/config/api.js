@@ -86,13 +86,25 @@ export const adminApi = {
 
   // Загрузка файлов
   uploadFile: (file) => {
+    // Проверка размера файла (максимум 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      return Promise.reject({
+        error: "File too large",
+        details: "Maximum file size is 5MB",
+        status: 400,
+      });
+    }
+
     const formData = new FormData();
     formData.append("file", file);
-    return api.post(API_ENDPOINTS.upload, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+
+    // Получаем текущие заголовки
+    const headers = {
+      ...api.defaults.headers,
+      "Content-Type": "multipart/form-data",
+    };
+
+    return api.post(API_ENDPOINTS.upload, formData, { headers });
   },
 
   // Типы продуктов

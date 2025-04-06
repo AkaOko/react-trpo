@@ -220,14 +220,19 @@ const AdminPage = () => {
           const uploadResponse = await adminApi.uploadFile(
             editProduct.imageFile
           );
-          if (uploadResponse?.data?.url) {
-            imageUrl = uploadResponse.data.url;
+
+          if (!uploadResponse?.data?.url) {
+            throw new Error("Не удалось получить URL загруженного изображения");
           }
+
+          imageUrl = uploadResponse.data.url;
         } catch (uploadError) {
           console.error("Ошибка при загрузке изображения:", uploadError);
           setError(
-            "Не удалось загрузить изображение. Пожалуйста, попробуйте позже."
+            uploadError.details ||
+              "Не удалось загрузить изображение. Пожалуйста, попробуйте позже."
           );
+          setLoading(false);
           return;
         }
       }
@@ -237,18 +242,24 @@ const AdminPage = () => {
         image: imageUrl,
       });
 
-      if (response?.data) {
-        setProducts(
-          products.map((product) =>
-            product.id === editProduct.id ? response.data : product
-          )
-        );
-        setEditProduct(null);
-        setSelectedProduct(response.data);
+      if (!response?.data) {
+        throw new Error("Не удалось обновить продукт");
       }
+
+      setProducts(
+        products.map((product) =>
+          product.id === editProduct.id ? response.data : product
+        )
+      );
+      setEditProduct(null);
+      setSelectedProduct(response.data);
+      setError(null);
     } catch (error) {
       console.error("Ошибка при обновлении продукта:", error);
-      setError("Не удалось обновить продукт. Пожалуйста, попробуйте позже.");
+      setError(
+        error.details ||
+          "Произошла ошибка при обновлении продукта. Пожалуйста, попробуйте позже."
+      );
     } finally {
       setLoading(false);
     }
