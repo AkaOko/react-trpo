@@ -5,15 +5,21 @@ const prisma = new PrismaClient();
 
 async function main() {
   try {
+    // Очищаем все таблицы перед заполнением
+    await prisma.materialRequest.deleteMany();
+    await prisma.orderProduct.deleteMany();
+    await prisma.order.deleteMany();
+    await prisma.product.deleteMany();
+    await prisma.material.deleteMany();
+    await prisma.user.deleteMany();
+
     // Создаем пользователей (10+)
     const adminPassword = await bcrypt.hash("admin", 10);
     const workerPassword = await bcrypt.hash("worker", 10);
     const clientPassword = await bcrypt.hash("client123", 10);
 
-    const admin = await prisma.user.upsert({
-      where: { email: "admin@example.com" },
-      update: {},
-      create: {
+    const admin = await prisma.user.create({
+      data: {
         name: "Администратор",
         email: "admin@example.com",
         password: adminPassword,
@@ -23,10 +29,8 @@ async function main() {
     });
 
     const users = await Promise.all([
-      prisma.user.upsert({
-        where: { email: "worker@example.com" },
-        update: {},
-        create: {
+      prisma.user.create({
+        data: {
           name: "Иванов Иван Иванович",
           email: "worker@example.com",
           password: workerPassword,
