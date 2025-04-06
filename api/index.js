@@ -581,9 +581,10 @@ export default async function handler(req, res) {
           return res.json(updatedOrder);
         } catch (error) {
           console.error("Order update error:", error);
-          return res
-            .status(500)
-            .json({ error: "Ошибка при обновлении заказа" });
+          return res.status(500).json({
+            error: "Ошибка при обновлении заказа",
+            details: error.message,
+          });
         }
 
       // Получение заказов мастера

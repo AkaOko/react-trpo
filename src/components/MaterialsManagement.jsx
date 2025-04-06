@@ -10,6 +10,7 @@ const MaterialsManagement = () => {
     materialId: "",
     quantity: 1,
   });
+  const [newMaterial, setNewMaterial] = useState({ name: "" });
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -121,6 +122,21 @@ const MaterialsManagement = () => {
     }
   };
 
+  const handleAddMaterial = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post("http://localhost:5000/materials", newMaterial, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNewMaterial({ name: "" });
+      fetchMaterials();
+    } catch (error) {
+      console.error("Ошибка при добавлении материала:", error);
+      setError("Не удалось добавить материал");
+    }
+  };
+
   if (loading) {
     return <div className="p-6">Загрузка...</div>;
   }
@@ -228,6 +244,44 @@ const MaterialsManagement = () => {
             <p className="text-center text-gray-500">Заявки отсутствуют</p>
           )}
         </div>
+      </div>
+
+      <form onSubmit={handleAddMaterial} className="mb-6">
+        <div className="flex gap-4">
+          <input
+            type="text"
+            value={newMaterial.name}
+            onChange={(e) => setNewMaterial({ name: e.target.value })}
+            placeholder="Название материала"
+            className="flex-1 p-2 border rounded"
+            required
+          />
+          <button
+            type="submit"
+            className="bg-emerald-500 text-white px-4 py-2 rounded hover:bg-emerald-600"
+          >
+            Добавить
+          </button>
+        </div>
+      </form>
+
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="py-2 px-4 text-left">ID</th>
+              <th className="py-2 px-4 text-left">Название</th>
+            </tr>
+          </thead>
+          <tbody>
+            {materials.map((material) => (
+              <tr key={material.id} className="border-b">
+                <td className="py-2 px-4">{material.id}</td>
+                <td className="py-2 px-4">{material.name}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

@@ -250,6 +250,11 @@ const AdminPage = () => {
     try {
       const response = await api.put(`/orders/${editOrder.id}`, {
         status: editOrder.status,
+        total: editOrder.total,
+        products: editOrder.products,
+        comment: editOrder.comment,
+        address: editOrder.address,
+        workType: editOrder.workType,
       });
       if (response.data) {
         setEditOrder(null);

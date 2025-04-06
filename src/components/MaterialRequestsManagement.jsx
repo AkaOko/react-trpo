@@ -4,46 +4,52 @@ import { jwtDecode } from "jwt-decode";
 
 const MaterialRequestsManagement = () => {
   const [requests, setRequests] = useState([]);
+  const [materials, setMaterials] = useState([]);
+  const [newRequest, setNewRequest] = useState({
+    materialId: "",
+    quantity: "",
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editRequest, setEditRequest] = useState(null);
-  const [materials, setMaterials] = useState([]);
 
   useEffect(() => {
-    fetchRequests();
-    fetchMaterials();
+    fetchData();
   }, []);
 
-  const fetchRequests = async () => {
+  const fetchData = async () => {
     try {
-      setLoading(true);
       const token = localStorage.getItem("token");
-      const response = await axios.get("/api/material-requests", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      // Фильтруем только невыполненные заявки
-      setRequests(
-        response.data.filter((request) => request.status !== "COMPLETED")
-      );
-      setError(null);
+      const [requestsRes, materialsRes] = await Promise.all([
+        axios.get("/api/material-requests", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        axios.get("/api/materials", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+      setRequests(requestsRes.data);
+      setMaterials(materialsRes.data);
+      setLoading(false);
     } catch (error) {
-      console.error("Ошибка при загрузке заявок:", error);
-      setError("Не удалось загрузить заявки");
-    } finally {
+      console.error("Ошибка при загрузке данных:", error);
+      setError("Не удалось загрузить данные");
       setLoading(false);
     }
   };
 
-  const fetchMaterials = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("/api/materials", {
+      await axios.post("/api/material-requests", newRequest, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setMaterials(response.data);
+      setNewRequest({ materialId: "", quantity: "" });
+      fetchData();
     } catch (error) {
-      console.error("Ошибка при загрузке материалов:", error);
-      setError("Не удалось загрузить список материалов");
+      console.error("Ошибка при создании заявки:", error);
+      setError("Не удалось создать заявку");
     }
   };
 
@@ -52,15 +58,17 @@ const MaterialRequestsManagement = () => {
       const token = localStorage.getItem("token");
       await axios.put(
         `/api/material-requests/${requestId}`,
-        { status: newStatus },
+        {
+          status: newStatus,
+        },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      fetchRequests(); // Обновляем список заявок
+      fetchData();
     } catch (error) {
       console.error("Ошибка при обновлении статуса:", error);
-      setError("Не удалось обновить статус заявки");
+      setError("Не удалось обновить статус");
     }
   };
 
@@ -78,7 +86,7 @@ const MaterialRequestsManagement = () => {
       );
 
       setEditRequest(null);
-      fetchRequests();
+      fetchData();
     } catch (error) {
       console.error("Ошибка при редактировании заявки:", error);
       setError("Не удалось отредактировать заявку");
@@ -94,165 +102,78 @@ const MaterialRequestsManagement = () => {
   }
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-6">
+    <div className="bg-white p-6 rounded-lg shadow-md">
+      <h2 className="text-2xl font-bold mb-4">
         Управление заявками на материалы
       </h2>
+
+      <form onSubmit={handleSubmit} className="mb-6">
+        <div className="grid grid-cols-2 gap-4">
+          <select
+            value={newRequest.materialId}
+            onChange={(e) =>
+              setNewRequest({ ...newRequest, materialId: e.target.value })
+            }
+            className="p-2 border rounded"
+            required
+          >
+            <option value="">Выберите материал</option>
+            {materials.map((material) => (
+              <option key={material.id} value={material.id}>
+                {material.name}
+              </option>
+            ))}
+          </select>
+          <input
+            type="number"
+            value={newRequest.quantity}
+            onChange={(e) =>
+              setNewRequest({ ...newRequest, quantity: e.target.value })
+            }
+            placeholder="Количество"
+            className="p-2 border rounded"
+            required
+            min="1"
+          />
+        </div>
+        <button
+          type="submit"
+          className="mt-4 bg-emerald-500 text-white px-4 py-2 rounded hover:bg-emerald-600"
+        >
+          Создать заявку
+        </button>
+      </form>
+
       <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border border-gray-300 rounded-lg shadow-md">
+        <table className="min-w-full bg-white">
           <thead>
-            <tr className="bg-gray-100 border-b border-gray-300">
-              <th className="p-3 text-left text-gray-700 font-semibold">
-                Дата
-              </th>
-              <th className="p-3 text-left text-gray-700 font-semibold">
-                Мастер
-              </th>
-              <th className="p-3 text-left text-gray-700 font-semibold">
-                Материал
-              </th>
-              <th className="p-3 text-left text-gray-700 font-semibold">
-                Количество
-              </th>
-              <th className="p-3 text-left text-gray-700 font-semibold">
-                Статус
-              </th>
-              <th className="p-3 text-left text-gray-700 font-semibold">
-                Действия
-              </th>
+            <tr className="bg-gray-100">
+              <th className="py-2 px-4 text-left">ID</th>
+              <th className="py-2 px-4 text-left">Материал</th>
+              <th className="py-2 px-4 text-left">Количество</th>
+              <th className="py-2 px-4 text-left">Статус</th>
+              <th className="py-2 px-4 text-left">Действия</th>
             </tr>
           </thead>
           <tbody>
             {requests.map((request) => (
-              <tr key={request.id} className="border-b border-gray-200">
-                <td className="p-3">
-                  {new Date(request.createdAt).toLocaleDateString("ru-RU")}
-                </td>
-                <td className="p-3">{request.user.name}</td>
-                <td className="p-3">
-                  {editRequest?.id === request.id ? (
-                    <select
-                      value={editRequest.materialId}
-                      onChange={(e) =>
-                        setEditRequest({
-                          ...editRequest,
-                          materialId: e.target.value,
-                        })
-                      }
-                      className="border p-1 rounded"
-                    >
-                      {materials.map((material) => (
-                        <option key={material.id} value={material.id}>
-                          {material.name}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    request.material.name
-                  )}
-                </td>
-                <td className="p-3">
-                  {editRequest?.id === request.id ? (
-                    <input
-                      type="number"
-                      value={editRequest.quantity}
-                      onChange={(e) =>
-                        setEditRequest({
-                          ...editRequest,
-                          quantity: parseInt(e.target.value),
-                        })
-                      }
-                      className="border p-1 rounded w-20"
-                    />
-                  ) : (
-                    request.quantity
-                  )}
-                </td>
-                <td className="p-3">
-                  <span
-                    className={`px-2 py-1 rounded text-sm ${
-                      request.status === "PENDING"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : request.status === "APPROVED"
-                        ? "bg-green-100 text-green-800"
-                        : request.status === "REJECTED"
-                        ? "bg-red-100 text-red-800"
-                        : "bg-blue-100 text-blue-800"
-                    }`}
+              <tr key={request.id} className="border-b">
+                <td className="py-2 px-4">{request.id}</td>
+                <td className="py-2 px-4">{request.material.name}</td>
+                <td className="py-2 px-4">{request.quantity}</td>
+                <td className="py-2 px-4">{request.status}</td>
+                <td className="py-2 px-4">
+                  <select
+                    value={request.status}
+                    onChange={(e) =>
+                      handleStatusChange(request.id, e.target.value)
+                    }
+                    className="p-1 border rounded"
                   >
-                    {request.status === "PENDING"
-                      ? "Ожидает"
-                      : request.status === "APPROVED"
-                      ? "Одобрено"
-                      : request.status === "REJECTED"
-                      ? "Отклонено"
-                      : "Выполнено"}
-                  </span>
-                </td>
-                <td className="p-3">
-                  <div className="flex gap-2">
-                    {editRequest?.id === request.id ? (
-                      <>
-                        <button
-                          onClick={() => handleEditRequest(request.id)}
-                          className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
-                        >
-                          Сохранить
-                        </button>
-                        <button
-                          onClick={() => setEditRequest(null)}
-                          className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600"
-                        >
-                          Отмена
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() =>
-                            setEditRequest({
-                              id: request.id,
-                              materialId: request.materialId,
-                              quantity: request.quantity,
-                            })
-                          }
-                          className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-                        >
-                          Редактировать
-                        </button>
-                        {request.status === "PENDING" && (
-                          <>
-                            <button
-                              onClick={() =>
-                                handleStatusChange(request.id, "APPROVED")
-                              }
-                              className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
-                            >
-                              Одобрить
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleStatusChange(request.id, "REJECTED")
-                              }
-                              className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                            >
-                              Отклонить
-                            </button>
-                          </>
-                        )}
-                        {request.status === "APPROVED" && (
-                          <button
-                            onClick={() =>
-                              handleStatusChange(request.id, "COMPLETED")
-                            }
-                            className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-                          >
-                            Выполнено
-                          </button>
-                        )}
-                      </>
-                    )}
-                  </div>
+                    <option value="PENDING">Ожидает</option>
+                    <option value="APPROVED">Одобрено</option>
+                    <option value="REJECTED">Отклонено</option>
+                  </select>
                 </td>
               </tr>
             ))}
