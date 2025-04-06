@@ -982,12 +982,14 @@ const AdminPage = () => {
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{user.phone}</TableCell>
                       <TableCell>{user.role}</TableCell>
-                      <TableCell>{user.ordersCount}</TableCell>
+                      <TableCell>{user.orders?.length || 0}</TableCell>
                       <TableCell>
-                        {user.totalOrdersAmount.toLocaleString("ru-RU", {
-                          style: "currency",
-                          currency: "RUB",
-                        })}
+                        {user.orders
+                          ?.reduce((sum, order) => sum + (order.total || 0), 0)
+                          .toLocaleString("ru-RU", {
+                            style: "currency",
+                            currency: "RUB",
+                          }) || "0 ₽"}
                       </TableCell>
                     </TableRow>
                   ))}
