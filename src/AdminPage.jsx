@@ -986,7 +986,7 @@ const AdminPage = () => {
                       <TableCell>
                         {user.orders
                           ?.reduce((sum, order) => sum + (order.total || 0), 0)
-                          .toLocaleString("ru-RU", {
+                          ?.toLocaleString("ru-RU", {
                             style: "currency",
                             currency: "RUB",
                           }) || "0 ₽"}
