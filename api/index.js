@@ -20,9 +20,6 @@ try {
   process.exit(1);
 }
 
-app.use(cors());
-app.use(express.json());
-
 // Настройка CORS для Vercel
 const allowedOrigins = [
   "https://react-trpo.vercel.app",
@@ -55,9 +52,21 @@ async function testDbConnection() {
 // Обработчик для serverless функций Vercel
 export default async function handler(req, res) {
   try {
+    console.log("Request received:", {
+      method: req.method,
+      path: req.url,
+      body: req.body,
+      headers: req.headers,
+    });
+
+    // Проверяем подключение к базе данных
     const isConnected = await testDbConnection();
     if (!isConnected) {
-      return res.status(500).json({ error: "Database connection failed" });
+      console.error("Database connection failed");
+      return res.status(500).json({
+        error: "Database connection failed",
+        details: "Could not connect to the database",
+      });
     }
 
     // Настраиваем CORS
@@ -89,7 +98,7 @@ export default async function handler(req, res) {
 
     // Извлекаем путь из URL
     const path = req.url.split("?")[0];
-    console.log("Request path:", path);
+    console.log("Processing path:", path);
 
     // Обработка различных маршрутов
     switch (true) {
@@ -280,39 +289,34 @@ export default async function handler(req, res) {
       // Регистрация пользователя
       case path === "/api/register" && req.method === "POST":
         try {
-          console.log("Начало обработки регистрации");
-          console.log("Тип req.body:", typeof req.body);
-          console.log("Содержимое req.body:", req.body);
-
-          // Проверяем и парсим тело запроса
-          if (typeof req.body === "string") {
-            console.log("Парсим строку JSON");
-            req.body = JSON.parse(req.body);
-          }
-
+          console.log("Processing registration request");
           const { name, email, password, phone, role } = req.body;
-          console.log("Распарсенные данные:", { name, email, phone, role });
 
           if (!email || !password) {
-            console.log("Отсутствует email или пароль");
-            return res
-              .status(400)
-              .json({ error: "Email и пароль обязательны" });
+            console.log("Missing required fields");
+            return res.status(400).json({
+              error: "Validation error",
+              details: "Email и пароль обязательны",
+            });
           }
 
-          console.log("Проверяем существование пользователя");
+          console.log("Checking for existing user");
           const existingUser = await prisma.user.findUnique({
             where: { email },
           });
+
           if (existingUser) {
-            console.log("Пользователь с таким email уже существует");
-            return res.status(400).json({ error: "Email уже используется" });
+            console.log("User already exists");
+            return res.status(400).json({
+              error: "User exists",
+              details: "Email уже используется",
+            });
           }
 
-          console.log("Хешируем пароль");
+          console.log("Hashing password");
           const hashedPassword = await bcrypt.hash(password, 10);
 
-          console.log("Создаем пользователя");
+          console.log("Creating new user");
           const user = await prisma.user.create({
             data: {
               name,
@@ -324,16 +328,16 @@ export default async function handler(req, res) {
               updatedAt: new Date(),
             },
           });
-          console.log("Пользователь успешно создан:", user.id);
 
-          return res.json({
+          console.log("User created successfully:", user.id);
+          return res.status(201).json({
             message: "Пользователь успешно зарегистрирован",
             userId: user.id,
           });
         } catch (error) {
-          console.error("Ошибка при регистрации:", error);
+          console.error("Registration error:", error);
           return res.status(500).json({
-            error: "Ошибка при регистрации",
+            error: "Registration failed",
             details: error.message,
           });
         }
@@ -845,11 +849,17 @@ export default async function handler(req, res) {
 
       default:
         console.log("Route not found:", path);
-        return res.status(404).json({ error: "Route not found" });
+        return res.status(404).json({
+          error: "Not found",
+          details: "Route not found",
+        });
     }
   } catch (error) {
     console.error("API error:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({
+      error: "Internal server error",
+      details: error.message,
+    });
   }
 }
 
