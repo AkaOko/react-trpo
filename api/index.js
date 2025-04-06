@@ -23,22 +23,33 @@ const logError = (error, context) => {
   });
 };
 
-// Инициализация Prisma с повторными попытками
-const initializePrisma = async (retries = 3) => {
-  for (let i = 0; i < retries; i++) {
-    try {
-      prisma = new PrismaClient();
-      await prisma.$connect();
-      console.log("Prisma client initialized successfully");
-      return true;
-    } catch (error) {
-      logError(error, `Prisma initialization attempt ${i + 1}`);
-      if (i === retries - 1) {
-        console.error("Failed to initialize Prisma after all retries");
+// Инициализация Prisma клиента
+const initializePrisma = async () => {
+  try {
+    prisma = new PrismaClient();
+    await prisma.$connect();
+    console.log("Prisma client initialized successfully");
+    return true;
+  } catch (error) {
+    console.error("Failed to initialize Prisma:", error);
+    return false;
+  }
+};
+
+// Проверка подключения к базе данных
+const testDbConnection = async () => {
+  try {
+    if (!prisma) {
+      const initialized = await initializePrisma();
+      if (!initialized) {
         return false;
       }
-      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
+    await prisma.$queryRaw`SELECT 1`;
+    return true;
+  } catch (error) {
+    console.error("Database connection test failed:", error);
+    return false;
   }
 };
 
@@ -85,18 +96,6 @@ const verifyToken = (req) => {
     throw error;
   }
 };
-
-// Проверка подключения к базе данных
-async function testDbConnection() {
-  try {
-    await prisma.$connect();
-    console.log("Database connection successful");
-    return true;
-  } catch (error) {
-    logError(error, "Database connection");
-    return false;
-  }
-}
 
 // Глобальный обработчик ошибок
 app.use((err, req, res, next) => {
