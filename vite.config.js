@@ -21,6 +21,7 @@ export default defineConfig({
         chunkFileNames: "assets/[name].[hash].js",
         assetFileNames: "assets/[name].[hash].[ext]",
       },
+      external: ["@mui/material", "@emotion/react", "@emotion/styled"],
     },
   },
   resolve: {
