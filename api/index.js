@@ -2,9 +2,43 @@ import express from "express";
 import cors from "cors";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import multer from "multer";
 import { PrismaClient } from "@prisma/client";
+import { fileURLToPath } from "url";
+import path from "path";
+import fs from "fs";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
 const prisma = new PrismaClient();
+
+app.use(cors());
+app.use(express.json());
+
+const uploadsDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log("Папка 'uploads' создана по пути:", uploadsDir);
+}
+
+app.use("/uploads", express.static(uploadsDir));
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(
+      null,
+      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
+    );
+  },
+});
+
+const upload = multer({ storage: storage });
 
 // Проверка подключения к базе данных
 async function testDbConnection() {
@@ -22,6 +56,7 @@ const allowedOrigins = [
   "https://react-trpo.vercel.app",
   "http://localhost:5173",
   "http://localhost:5000",
+  "https://api.react-trpo.vercel.app",
 ];
 
 // Верификация JWT токена
@@ -666,8 +701,11 @@ export default async function handler(req, res) {
           const user = verifyToken(req);
           const { materialId, quantity } = req.body;
 
-          if (user.role !== "ADMIN" && user.role !== "WORKER") {
-            return res.status(403).json({ error: "Доступ запрещен" });
+          // Проверяем, что только работники могут создавать заявки
+          if (user.role !== "WORKER") {
+            return res
+              .status(403)
+              .json({ error: "Только работники могут создавать заявки" });
           }
 
           if (!materialId || !quantity) {
@@ -727,10 +765,11 @@ export default async function handler(req, res) {
             return res.status(404).json({ error: "Заявка не найдена" });
           }
 
-          if (user.role !== "ADMIN" && existingRequest.userId !== user.userId) {
-            return res
-              .status(403)
-              .json({ error: "Нет прав для обновления этой заявки" });
+          // Проверяем, что только администратор может менять статус
+          if (user.role !== "ADMIN") {
+            return res.status(403).json({
+              error: "Только администратор может менять статус заявки",
+            });
           }
 
           const updatedRequest = await prisma.materialRequest.update({
@@ -808,3 +847,6 @@ export default async function handler(req, res) {
     });
   }
 }
+
+// Экспортируем app для использования в Railway
+export { app };

@@ -11,7 +11,7 @@ const MaterialRequestsManagement = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [editRequest, setEditRequest] = useState(null);
+  const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
     fetchData();

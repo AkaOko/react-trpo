@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String    @id @default(cuid())
+  name             String
+  email            String    @unique
+  password         String
+  phone            String?
+  role             String    @default("CLIENT")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  orders           Order[]
+  materialRequests MaterialRequest[]
+  totalOrdersAmount Float     @default(0)
+}
+
+model Product {
+  id        String   @id @default(cuid())
+  name      String
+  type      String
+  price     Float
+  image     String?
+  material  Material @relation(fields: [materialId], references: [id])
+  materialId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    OrderProduct[]
+}
+
+model Material {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  products  Product[]
+  requests  MaterialRequest[]
+}
+
+model Order {
+  id        String         @id @default(cuid())
+  user      User           @relation(fields: [userId], references: [id])
+  userId    String
+  status    String         @default("Новый")
+  total     Float
+  comment   String?
+  address   String?
+  workType  String?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  products  OrderProduct[]
+}
+
+model OrderProduct {
+  id        String   @id @default(cuid())
+  order     Order    @relation(fields: [orderId], references: [id])
+  orderId   String
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MaterialRequest {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  material  Material @relation(fields: [materialId], references: [id])
+  materialId String
+  quantity  Int
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+} 
