@@ -5,6 +5,9 @@
   "scripts": {
     "postinstall": "prisma generate"
   },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
   "dependencies": {
     "@prisma/client": "^5.10.2",
     "bcrypt": "^5.1.1",
