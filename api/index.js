@@ -12,7 +12,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const prisma = new PrismaClient();
+let prisma;
+
+try {
+  prisma = new PrismaClient();
+  console.log("Prisma client initialized successfully");
+} catch (error) {
+  console.error("Failed to initialize Prisma client:", error);
+  process.exit(1);
+}
 
 app.use(cors());
 app.use(express.json());
@@ -40,14 +48,14 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-// Проверка подключения к базе данных
 async function testDbConnection() {
   try {
     await prisma.$connect();
-    console.log("Successfully connected to database");
+    console.log("Database connection successful");
+    return true;
   } catch (error) {
     console.error("Database connection error:", error);
-    throw error;
+    return false;
   }
 }
 
@@ -71,6 +79,11 @@ const verifyToken = (req) => {
 // Обработчик для serverless функций Vercel
 export default async function handler(req, res) {
   try {
+    const isConnected = await testDbConnection();
+    if (!isConnected) {
+      return res.status(500).json({ error: "Database connection failed" });
+    }
+
     // Настраиваем CORS
     await new Promise((resolve, reject) => {
       cors({
@@ -107,7 +120,6 @@ export default async function handler(req, res) {
       // Аутентификация
       case path === "/api/login" && req.method === "POST":
         try {
-          await testDbConnection();
           const { email, password } = req.body;
 
           if (!email || !password) {
@@ -292,7 +304,6 @@ export default async function handler(req, res) {
       // Регистрация пользователя
       case path === "/api/register" && req.method === "POST":
         try {
-          await testDbConnection();
           const { name, email, password, phone, role } = req.body;
           console.log("Request body:", req.body);
 
@@ -839,12 +850,8 @@ export default async function handler(req, res) {
         return res.status(404).json({ error: "Route not found" });
     }
   } catch (error) {
-    console.error("Server error:", error);
-    return res.status(500).json({
-      error: "Internal server error",
-      message: error.message,
-      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
-    });
+    console.error("API error:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 }
 
