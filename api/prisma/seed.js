@@ -5,21 +5,15 @@ const prisma = new PrismaClient();
 
 async function main() {
   try {
-    // Очищаем существующие данные
-    console.log("Очищаем существующие данные...");
-    await prisma.orderProduct.deleteMany();
-    await prisma.order.deleteMany();
-    await prisma.product.deleteMany();
-    await prisma.materialRequest.deleteMany();
-    await prisma.material.deleteMany();
-    await prisma.supplier.deleteMany();
-    await prisma.user.deleteMany();
+    console.log("Начинаем заполнение базы данных...");
 
-    console.log("Создаем пользователей...");
     // Создаем пользователей
+    console.log("Создаем пользователей...");
     const users = await Promise.all([
-      prisma.user.create({
-        data: {
+      prisma.user.upsert({
+        where: { email: "admin@gmail.com" },
+        update: {},
+        create: {
           name: "Администратор",
           email: "admin@gmail.com",
           password: await bcrypt.hash("admin", 10),
@@ -27,8 +21,10 @@ async function main() {
           role: "ADMIN",
         },
       }),
-      prisma.user.create({
-        data: {
+      prisma.user.upsert({
+        where: { email: "worker@gmail.com" },
+        update: {},
+        create: {
           name: "Работник",
           email: "worker@gmail.com",
           password: await bcrypt.hash("admin", 10),
@@ -36,8 +32,10 @@ async function main() {
           role: "WORKER",
         },
       }),
-      prisma.user.create({
-        data: {
+      prisma.user.upsert({
+        where: { email: "ivan@gmail.com" },
+        update: {},
+        create: {
           name: "Иван Петров",
           email: "ivan@gmail.com",
           password: await bcrypt.hash("user123", 10),
@@ -45,8 +43,10 @@ async function main() {
           role: "CLIENT",
         },
       }),
-      prisma.user.create({
-        data: {
+      prisma.user.upsert({
+        where: { email: "maria@gmail.com" },
+        update: {},
+        create: {
           name: "Мария Сидорова",
           email: "maria@gmail.com",
           password: await bcrypt.hash("user123", 10),
@@ -54,8 +54,10 @@ async function main() {
           role: "CLIENT",
         },
       }),
-      prisma.user.create({
-        data: {
+      prisma.user.upsert({
+        where: { email: "alex@gmail.com" },
+        update: {},
+        create: {
           name: "Алексей Иванов",
           email: "alex@gmail.com",
           password: await bcrypt.hash("user123", 10),
@@ -63,8 +65,10 @@ async function main() {
           role: "CLIENT",
         },
       }),
-      prisma.user.create({
-        data: {
+      prisma.user.upsert({
+        where: { email: "elena@gmail.com" },
+        update: {},
+        create: {
           name: "Елена Смирнова",
           email: "elena@gmail.com",
           password: await bcrypt.hash("user123", 10),
@@ -72,8 +76,10 @@ async function main() {
           role: "CLIENT",
         },
       }),
-      prisma.user.create({
-        data: {
+      prisma.user.upsert({
+        where: { email: "dmitry@gmail.com" },
+        update: {},
+        create: {
           name: "Дмитрий Козлов",
           email: "dmitry@gmail.com",
           password: await bcrypt.hash("user123", 10),
@@ -81,8 +87,10 @@ async function main() {
           role: "CLIENT",
         },
       }),
-      prisma.user.create({
-        data: {
+      prisma.user.upsert({
+        where: { email: "anna@gmail.com" },
+        update: {},
+        create: {
           name: "Анна Морозова",
           email: "anna@gmail.com",
           password: await bcrypt.hash("user123", 10),
@@ -90,8 +98,10 @@ async function main() {
           role: "CLIENT",
         },
       }),
-      prisma.user.create({
-        data: {
+      prisma.user.upsert({
+        where: { email: "sergey@gmail.com" },
+        update: {},
+        create: {
           name: "Сергей Волков",
           email: "sergey@gmail.com",
           password: await bcrypt.hash("user123", 10),
@@ -99,8 +109,10 @@ async function main() {
           role: "CLIENT",
         },
       }),
-      prisma.user.create({
-        data: {
+      prisma.user.upsert({
+        where: { email: "olga@gmail.com" },
+        update: {},
+        create: {
           name: "Ольга Кузнецова",
           email: "olga@gmail.com",
           password: await bcrypt.hash("user123", 10),
@@ -110,8 +122,8 @@ async function main() {
       }),
     ]);
 
-    console.log("Создаем поставщиков...");
     // Создаем поставщиков
+    console.log("Создаем поставщиков...");
     const suppliers = await Promise.all([
       prisma.supplier.create({
         data: {
@@ -175,8 +187,8 @@ async function main() {
       }),
     ]);
 
-    console.log("Создаем материалы...");
     // Создаем материалы
+    console.log("Создаем материалы...");
     const materials = await Promise.all([
       prisma.material.create({
         data: {
@@ -260,14 +272,14 @@ async function main() {
       }),
     ]);
 
-    console.log("Создаем продукты...");
     // Создаем продукты
+    console.log("Создаем продукты...");
     const products = await Promise.all([
       prisma.product.create({
         data: {
           name: "Кольцо с бриллиантом 'Классика'",
           type: "RING",
-          price: 45000,
+          price: 50000,
           materialId: materials[0].id,
         },
       }),
@@ -275,7 +287,7 @@ async function main() {
         data: {
           name: "Серебряные серьги 'Капля'",
           type: "EARRINGS",
-          price: 5000,
+          price: 15000,
           materialId: materials[1].id,
         },
       }),
@@ -345,13 +357,13 @@ async function main() {
       }),
     ]);
 
-    console.log("Создаем заказы...");
     // Создаем заказы
+    console.log("Создаем заказы...");
     await Promise.all([
       prisma.order.create({
         data: {
           userId: users[2].id,
-          total: 45000,
+          total: 50000,
           status: "Новый",
           workType: "RING",
           address: "ул. Ленина, 1",
@@ -363,7 +375,7 @@ async function main() {
       prisma.order.create({
         data: {
           userId: users[3].id,
-          total: 5000,
+          total: 15000,
           status: "В обработке",
           workType: "EARRINGS",
           address: "ул. Пушкина, 2",
@@ -470,8 +482,8 @@ async function main() {
       }),
     ]);
 
-    console.log("Создаем заявки на материалы...");
     // Создаем заявки на материалы
+    console.log("Создаем заявки на материалы...");
     await Promise.all([
       prisma.materialRequest.create({
         data: {
@@ -555,12 +567,20 @@ async function main() {
       }),
     ]);
 
-    console.log("База данных успешно заполнена тестовыми данными!");
+    console.log("База данных успешно заполнена тестовыми данными");
   } catch (error) {
     console.error("Ошибка при заполнении базы данных:", error);
+    throw error;
   } finally {
     await prisma.$disconnect();
   }
 }
 
-main();
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

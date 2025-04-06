@@ -5,6 +5,8 @@ import bcrypt from "bcrypt";
 import { PrismaClient } from "@prisma/client";
 import { fileURLToPath } from "url";
 import path from "path";
+import multer from "multer";
+import fs from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -49,6 +51,27 @@ async function testDbConnection() {
     return false;
   }
 }
+
+// Добавляем обработку загрузки файлов
+const uploadsDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(
+      null,
+      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
+    );
+  },
+});
+
+const upload = multer({ storage: storage });
 
 // Обработчик для serverless функций Vercel
 export default async function handler(req, res) {
@@ -867,6 +890,29 @@ export default async function handler(req, res) {
           return res
             .status(500)
             .json({ error: "Не удалось обновить данные пользователя" });
+        }
+
+      // Добавляем обработку загрузки файлов
+      case path === "/api/upload" && req.method === "POST":
+        try {
+          upload.single("image")(req, res, async (err) => {
+            if (err) {
+              console.error("Ошибка при загрузке файла:", err);
+              return res
+                .status(500)
+                .json({ error: "Ошибка при загрузке файла" });
+            }
+
+            if (!req.file) {
+              return res.status(400).json({ error: "Файл не был загружен" });
+            }
+
+            const fileUrl = `/uploads/${req.file.filename}`;
+            return res.json({ url: fileUrl });
+          });
+        } catch (error) {
+          console.error("Ошибка при загрузке файла:", error);
+          return res.status(500).json({ error: "Ошибка при загрузке файла" });
         }
 
       default:
