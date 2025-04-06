@@ -15,7 +15,7 @@ self.addEventListener("fetch", (event) => {
   // Пропускаем запросы к API
   if (url.pathname.startsWith("/api/")) {
     event.respondWith(
-      fetch(event.request)
+      fetchWithRetry(event.request, 3)
         .then((response) => {
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -24,7 +24,25 @@ self.addEventListener("fetch", (event) => {
         })
         .catch((error) => {
           console.error("API fetch error:", error);
-          // Возвращаем ошибку с тем же статусом, что и оригинальный запрос
+          // Проверяем кэш для GET запросов
+          if (event.request.method === "GET") {
+            return caches.match(event.request).then((cachedResponse) => {
+              if (cachedResponse) {
+                return cachedResponse;
+              }
+              return new Response(
+                JSON.stringify({
+                  error: "Network error",
+                  details: error.message,
+                  url: event.request.url,
+                }),
+                {
+                  status: error.message.includes("404") ? 404 : 500,
+                  headers: { "Content-Type": "application/json" },
+                }
+              );
+            });
+          }
           return new Response(
             JSON.stringify({
               error: "Network error",
@@ -77,3 +95,20 @@ self.addEventListener("fetch", (event) => {
       })
   );
 });
+
+// Добавляем функцию для повторных попыток
+async function fetchWithRetry(request, retries) {
+  try {
+    const response = await fetch(request);
+    if (!response.ok && retries > 0) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response;
+  } catch (error) {
+    if (retries > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      return fetchWithRetry(request, retries - 1);
+    }
+    throw error;
+  }
+}

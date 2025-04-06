@@ -1,8 +1,7 @@
 import axios from "axios";
 import { API_ENDPOINTS } from "./config";
 
-const API_URL =
-  import.meta.env.VITE_API_URL || "https://react-trpo.vercel.app/api";
+const API_URL = import.meta.env.VITE_API_URL || "https://react-trpo.vercel.app";
 
 const api = axios.create({
   baseURL: API_URL,
