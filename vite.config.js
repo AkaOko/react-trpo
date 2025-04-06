@@ -21,8 +21,13 @@ export default defineConfig({
         chunkFileNames: "assets/[name].[hash].js",
         assetFileNames: "assets/[name].[hash].[ext]",
       },
-      external: ["@mui/material", "@emotion/react", "@emotion/styled"],
     },
+    commonjsOptions: {
+      include: [/node_modules/],
+    },
+  },
+  optimizeDeps: {
+    include: ["@mui/material", "@emotion/react", "@emotion/styled"],
   },
   resolve: {
     alias: {
