@@ -40,6 +40,18 @@ const verifyToken = (req) => {
   return jwt.verify(token, "your-secret-key");
 };
 
+// Проверка подключения к базе данных
+async function testDbConnection() {
+  try {
+    await prisma.$connect();
+    console.log("Database connection successful");
+    return true;
+  } catch (error) {
+    console.error("Database connection error:", error);
+    return false;
+  }
+}
+
 // Обработчик для serverless функций Vercel
 export default async function handler(req, res) {
   try {
