@@ -107,12 +107,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Добавляем обработку загрузки файлов
-const uploadsDir = path.join(process.cwd(), "uploads");
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
 // Настройка multer для временного хранения в памяти
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -1001,7 +995,7 @@ export default async function handler(req, res) {
             .json({ error: "Не удалось обновить данные пользователя" });
         }
 
-      // Добавляем обработчик загрузки файлов
+      // Обновляем обработчик загрузки файла
       case path === "/api/upload" && req.method === "POST":
         try {
           upload.single("file")(req, res, async (err) => {
@@ -1013,28 +1007,38 @@ export default async function handler(req, res) {
             }
 
             if (!req.file) {
-              return res.status(400).json({ error: "No file uploaded" });
+              return res.status(400).json({ error: "Файл не был загружен" });
             }
 
-            // Здесь вы можете обработать файл в памяти
-            // Например, отправить его в облачное хранилище или сохранить в базе данных
-            const fileData = {
-              buffer: req.file.buffer,
-              mimetype: req.file.mimetype,
-              originalname: req.file.originalname,
-              size: req.file.size,
-            };
+            // Получаем файл из памяти
+            const fileBuffer = req.file.buffer;
+            const fileName = req.file.originalname;
+            const fileType = req.file.mimetype;
 
-            // Временный ответ - в реальном приложении здесь должна быть логика сохранения
+            // Здесь можно добавить логику для сохранения файла в облачное хранилище
+            // или обработки файла в памяти
+
             res.json({
-              message: "File uploaded successfully",
-              filename: req.file.originalname,
-              size: req.file.size,
+              message: "Файл успешно загружен",
+              fileName,
+              fileType,
+              size: fileBuffer.length,
             });
           });
         } catch (error) {
           console.error("Ошибка при загрузке файла:", error);
-          return res.status(500).json({ error: "Failed to upload file" });
+          res.status(500).json({ error: "Ошибка при загрузке файла" });
+        }
+
+      // Обновляем обработчик получения файла
+      case path === "/api/file/:filename" && req.method === "GET":
+        try {
+          const filename = req.params.filename;
+          // Здесь можно добавить логику для получения файла из облачного хранилища
+          res.status(404).json({ error: "Файл не найден" });
+        } catch (error) {
+          console.error("Ошибка при получении файла:", error);
+          res.status(500).json({ error: "Ошибка при получении файла" });
         }
 
       default:
