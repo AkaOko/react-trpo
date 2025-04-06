@@ -1,4 +1,5 @@
 import axios from "axios";
+import { API_ENDPOINTS } from "./config";
 
 const API_URL =
   import.meta.env.VITE_API_URL || "https://react-trpo.vercel.app/api";
@@ -60,4 +61,43 @@ api.interceptors.response.use(
   }
 );
 
-export default api;
+export const adminApi = {
+  // Продукты
+  getProducts: () => api.get(API_ENDPOINTS.products),
+  createProduct: (data) => api.post(API_ENDPOINTS.products, data),
+  updateProduct: (id, data) => api.put(`${API_ENDPOINTS.products}/${id}`, data),
+  deleteProduct: (id) => api.delete(`${API_ENDPOINTS.products}/${id}`),
+
+  // Материалы
+  getMaterials: () => api.get(API_ENDPOINTS.materials),
+  createMaterial: (data) => api.post(API_ENDPOINTS.materials, data),
+  updateMaterial: (id, data) =>
+    api.put(`${API_ENDPOINTS.materials}/${id}`, data),
+  deleteMaterial: (id) => api.delete(`${API_ENDPOINTS.materials}/${id}`),
+
+  // Заказы
+  getOrders: () => api.get(API_ENDPOINTS.orders),
+  updateOrder: (id, data) => api.put(`${API_ENDPOINTS.orders}/${id}`, data),
+  deleteOrder: (id) => api.delete(`${API_ENDPOINTS.orders}/${id}`),
+
+  // Пользователи
+  getUsers: () => api.get(API_ENDPOINTS.users),
+  updateUser: (id, data) => api.put(`${API_ENDPOINTS.users}/${id}`, data),
+  deleteUser: (id) => api.delete(`${API_ENDPOINTS.users}/${id}`),
+
+  // Загрузка файлов
+  uploadFile: (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api.post(API_ENDPOINTS.upload, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
+
+  // Типы продуктов
+  getProductTypes: () => api.get(API_ENDPOINTS.productTypes),
+};
+
+export default adminApi;

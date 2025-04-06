@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
+import adminApi from "../config/api";
 
 const MaterialRequestsManagement = () => {
   const [requests, setRequests] = useState([]);
@@ -12,6 +13,8 @@ const MaterialRequestsManagement = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userRole, setUserRole] = useState(null);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [editRequest, setEditRequest] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -103,6 +106,35 @@ const MaterialRequestsManagement = () => {
     }
   };
 
+  const handleOpenModal = (request) => {
+    setSelectedRequest(request);
+    setEditRequest(null);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedRequest(null);
+    setEditRequest(null);
+  };
+
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditRequest((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveChanges = async () => {
+    try {
+      await adminApi.updateMaterialRequest(editRequest.id, {
+        status: editRequest.status,
+        quantity: editRequest.quantity,
+      });
+      await fetchData();
+      handleCloseModal();
+    } catch (error) {
+      console.error("Ошибка при сохранении изменений:", error);
+      setError("Не удалось сохранить изменения");
+    }
+  };
+
   if (loading) {
     return <div className="p-6">Загрузка...</div>;
   }
@@ -158,45 +190,120 @@ const MaterialRequestsManagement = () => {
       )}
 
       <div className="overflow-x-auto">
-        <table className="min-w-full bg-white">
+        <table className="min-w-full bg-white border border-gray-300 rounded-lg shadow-md">
           <thead>
-            <tr className="bg-gray-100">
-              <th className="py-2 px-4 text-left">ID</th>
-              <th className="py-2 px-4 text-left">Материал</th>
-              <th className="py-2 px-4 text-left">Количество</th>
-              <th className="py-2 px-4 text-left">Статус</th>
-              {userRole === "ADMIN" && (
-                <th className="py-2 px-4 text-left">Действия</th>
-              )}
+            <tr className="bg-gray-100 border-b border-gray-300">
+              <th className="p-3 text-left text-gray-700 font-semibold">
+                Материал
+              </th>
+              <th className="p-3 text-left text-gray-700 font-semibold">
+                Количество
+              </th>
+              <th className="p-3 text-left text-gray-700 font-semibold">
+                Статус
+              </th>
+              <th className="p-3 text-left text-gray-700 font-semibold">
+                Дата создания
+              </th>
+              <th className="p-3 text-left text-gray-700 font-semibold">
+                Действия
+              </th>
             </tr>
           </thead>
           <tbody>
             {requests.map((request) => (
-              <tr key={request.id} className="border-b">
-                <td className="py-2 px-4">{request.id}</td>
-                <td className="py-2 px-4">{request.material.name}</td>
-                <td className="py-2 px-4">{request.quantity}</td>
-                <td className="py-2 px-4">{request.status}</td>
-                {userRole === "ADMIN" && (
-                  <td className="py-2 px-4">
-                    <select
-                      value={request.status}
-                      onChange={(e) =>
-                        handleStatusChange(request.id, e.target.value)
-                      }
-                      className="p-1 border rounded"
-                    >
-                      <option value="PENDING">Ожидает</option>
-                      <option value="APPROVED">Одобрено</option>
-                      <option value="REJECTED">Отклонено</option>
-                    </select>
-                  </td>
-                )}
+              <tr
+                key={request.id}
+                className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer"
+                onClick={() => handleOpenModal(request)}
+              >
+                <td className="p-3">{request.material.name}</td>
+                <td className="p-3">{request.quantity}</td>
+                <td className="p-3">
+                  <span
+                    className={`px-2 py-1 rounded text-sm ${
+                      request.status === "PENDING"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : request.status === "APPROVED"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {request.status === "PENDING"
+                      ? "В ожидании"
+                      : request.status === "APPROVED"
+                      ? "Одобрено"
+                      : "Отклонено"}
+                  </span>
+                </td>
+                <td className="p-3">
+                  {new Date(request.createdAt).toLocaleDateString("ru-RU")}
+                </td>
+                <td className="p-3">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditRequest(request);
+                    }}
+                    className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+                  >
+                    Редактировать
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* Модальное окно для редактирования заявки */}
+      {editRequest && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-start overflow-y-auto z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md max-h-[80vh] overflow-y-auto mt-16">
+            <h2 className="text-xl font-semibold mb-4">
+              Редактирование заявки
+            </h2>
+            <div className="mt-2">
+              <label className="block font-semibold">Статус:</label>
+              <select
+                name="status"
+                value={editRequest.status}
+                onChange={handleEditChange}
+                className="border p-2 rounded w-full mb-2"
+              >
+                <option value="PENDING">В ожидании</option>
+                <option value="APPROVED">Одобрено</option>
+                <option value="REJECTED">Отклонено</option>
+              </select>
+            </div>
+            <div className="mt-2">
+              <label className="block font-semibold">Количество:</label>
+              <input
+                type="number"
+                name="quantity"
+                value={editRequest.quantity}
+                onChange={handleEditChange}
+                className="border p-2 rounded w-full mb-2"
+                min="1"
+              />
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={handleSaveChanges}
+                className="bg-green-500 text-white p-2 rounded hover:bg-green-600"
+              >
+                Сохранить
+              </button>
+              <button
+                onClick={handleCloseModal}
+                className="bg-gray-500 text-white p-2 rounded hover:bg-gray-600"
+              >
+                Отмена
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
