@@ -138,12 +138,22 @@ const AdminPage = () => {
   const handleCreateProduct = async (e) => {
     e.preventDefault();
     try {
+      setLoading(true);
       let imageUrl = null;
+
       if (newProduct.image) {
-        const formData = new FormData();
-        formData.append("image", newProduct.image);
-        const response = await adminApi.uploadFile(formData);
-        imageUrl = response.data.url;
+        try {
+          const uploadResponse = await adminApi.uploadFile(newProduct.image);
+          if (uploadResponse?.data?.url) {
+            imageUrl = uploadResponse.data.url;
+          }
+        } catch (uploadError) {
+          console.error("Ошибка при загрузке изображения:", uploadError);
+          setError(
+            "Не удалось загрузить изображение. Пожалуйста, попробуйте позже."
+          );
+          return;
+        }
       }
 
       const response = await adminApi.createProduct({
@@ -151,7 +161,8 @@ const AdminPage = () => {
         image: imageUrl,
       });
 
-      if (response.data) {
+      if (response?.data) {
+        setProducts([...products, response.data]);
         setNewProduct({
           name: "",
           type: "",
@@ -159,13 +170,12 @@ const AdminPage = () => {
           price: "",
           image: null,
         });
-        // Обновляем список продуктов
-        const productsRes = await adminApi.getProducts();
-        setProducts(productsRes.data);
       }
     } catch (error) {
       console.error("Ошибка при создании продукта:", error);
-      setError("Не удалось добавить товар. Проверьте данные и сервер.");
+      setError("Не удалось создать продукт. Пожалуйста, попробуйте позже.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -202,12 +212,24 @@ const AdminPage = () => {
 
   const handleUpdateProduct = async () => {
     try {
+      setLoading(true);
       let imageUrl = editProduct.image;
+
       if (editProduct.imageFile) {
-        const formData = new FormData();
-        formData.append("image", editProduct.imageFile);
-        const response = await adminApi.uploadFile(formData);
-        imageUrl = response.data.url;
+        try {
+          const uploadResponse = await adminApi.uploadFile(
+            editProduct.imageFile
+          );
+          if (uploadResponse?.data?.url) {
+            imageUrl = uploadResponse.data.url;
+          }
+        } catch (uploadError) {
+          console.error("Ошибка при загрузке изображения:", uploadError);
+          setError(
+            "Не удалось загрузить изображение. Пожалуйста, попробуйте позже."
+          );
+          return;
+        }
       }
 
       const response = await adminApi.updateProduct(editProduct.id, {
@@ -215,22 +237,20 @@ const AdminPage = () => {
         image: imageUrl,
       });
 
-      if (response.data) {
+      if (response?.data) {
+        setProducts(
+          products.map((product) =>
+            product.id === editProduct.id ? response.data : product
+          )
+        );
         setEditProduct(null);
-        // Обновляем список продуктов
-        const productsRes = await adminApi.getProducts();
-        setProducts(productsRes.data);
         setSelectedProduct(response.data);
       }
     } catch (error) {
       console.error("Ошибка при обновлении продукта:", error);
-      if (error.response?.status === 403) {
-        setError("Доступ запрещен. Требуются права администратора.");
-      } else if (error.response?.status === 404) {
-        setError("Продукт не найден.");
-      } else {
-        setError("Не удалось сохранить изменения.");
-      }
+      setError("Не удалось обновить продукт. Пожалуйста, попробуйте позже.");
+    } finally {
+      setLoading(false);
     }
   };
 

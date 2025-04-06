@@ -98,6 +98,15 @@ export const adminApi = {
 
   // Типы продуктов
   getProductTypes: () => api.get(API_ENDPOINTS.productTypes),
+
+  // Заявки на материалы
+  getMaterialRequests: () => api.get(API_ENDPOINTS.materialRequests),
+  createMaterialRequest: (data) =>
+    api.post(API_ENDPOINTS.materialRequests, data),
+  updateMaterialRequest: (id, data) =>
+    api.put(`${API_ENDPOINTS.materialRequests}/${id}`, data),
+  deleteMaterialRequest: (id) =>
+    api.delete(`${API_ENDPOINTS.materialRequests}/${id}`),
 };
 
 export default adminApi;

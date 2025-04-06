@@ -27,16 +27,25 @@ const MaterialRequestsManagement = () => {
 
   const fetchData = async () => {
     try {
+      setLoading(true);
       const [requestsRes, materialsRes] = await Promise.all([
         adminApi.getMaterialRequests(),
         adminApi.getMaterials(),
       ]);
-      setRequests(requestsRes.data);
-      setMaterials(materialsRes.data);
-      setLoading(false);
+
+      if (requestsRes?.data) {
+        setRequests(requestsRes.data);
+      }
+
+      if (materialsRes?.data) {
+        setMaterials(materialsRes.data);
+      }
+
+      setError(null);
     } catch (error) {
       console.error("Ошибка при загрузке данных:", error);
-      setError("Не удалось загрузить данные");
+      setError("Не удалось загрузить данные. Пожалуйста, попробуйте позже.");
+    } finally {
       setLoading(false);
     }
   };
@@ -97,16 +106,31 @@ const MaterialRequestsManagement = () => {
   };
 
   const handleSaveChanges = async () => {
+    if (!editRequest?.id) {
+      setError("Неверные данные для редактирования");
+      return;
+    }
+
     try {
-      await adminApi.updateMaterialRequest(editRequest.id, {
+      setLoading(true);
+      const response = await adminApi.updateMaterialRequest(editRequest.id, {
         status: editRequest.status,
         quantity: editRequest.quantity,
       });
-      await fetchData();
-      handleCloseModal();
+
+      if (response?.data) {
+        setRequests(
+          requests.map((request) =>
+            request.id === editRequest.id ? response.data : request
+          )
+        );
+        handleCloseModal();
+      }
     } catch (error) {
       console.error("Ошибка при сохранении изменений:", error);
-      setError("Не удалось сохранить изменения");
+      setError("Не удалось сохранить изменения. Пожалуйста, попробуйте позже.");
+    } finally {
+      setLoading(false);
     }
   };
 
