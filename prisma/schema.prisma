@@ -8,37 +8,38 @@ datasource db {
 }
 
 model User {
-  id               String    @id @default(cuid())
-  name             String
-  email            String    @unique
-  password         String
-  phone            String?
-  role             String    @default("CLIENT")
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  orders           Order[]
-  materialRequests MaterialRequest[]
-  totalOrdersAmount Float     @default(0)
+  id                 String            @id @default(cuid())
+  name               String
+  email              String            @unique
+  password           String
+  phone              String?
+  role               String            @default("CLIENT")
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  orders             Order[]
+  requestedMaterials MaterialRequest[] @relation("RequestedBy")
+  approvedMaterials  MaterialRequest[] @relation("ApprovedBy")
+  totalOrdersAmount  Float             @default(0)
 }
 
 model Product {
-  id        String   @id @default(cuid())
-  name      String
-  type      String
-  price     Float
-  image     String?
-  material  Material @relation(fields: [materialId], references: [id])
+  id         String         @id @default(cuid())
+  name       String        @unique
+  type       String
+  price      Float
+  image      String?
+  material   Material      @relation(fields: [materialId], references: [id])
   materialId String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  orders    OrderProduct[]
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  orders     OrderProduct[]
 }
 
 model Material {
-  id        String   @id @default(cuid())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String            @id @default(cuid())
+  name      String           @unique
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
   products  Product[]
   requests  MaterialRequest[]
 }
@@ -71,9 +72,9 @@ model OrderProduct {
 
 model MaterialRequest {
   id              String   @id @default(cuid())
-  user            User     @relation(fields: [requestedById], references: [id])
+  requestedBy     User     @relation("RequestedBy", fields: [requestedById], references: [id])
   requestedById   String
-  approvedBy      User?    @relation(fields: [approvedById], references: [id])
+  approvedBy      User?    @relation("ApprovedBy", fields: [approvedById], references: [id])
   approvedById    String?
   material        Material @relation(fields: [materialId], references: [id])
   materialId      String
